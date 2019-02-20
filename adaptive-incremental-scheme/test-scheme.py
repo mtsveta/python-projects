@@ -1,107 +1,63 @@
+from example1 import *
+from adaptive_schemes import *
+from uniform_schemes import *
+from plotting import *
 
 import numpy as np
-import math
-import matplotlib.pyplot as plt
 
-from example1 import y, f, fprime, f_n, fprime_n
+
+result_folder = 'example1'
+result_path = create_results_folder(result_folder)
 
 # order or the scheme
-p = 4
+order = 4
 
 # given tolerances
-eps_rel = 1e-6
-eps_abs = 1e-4
+num_tol = 5
+factor  = 1e0
+eps_abs = np.logspace(-3, -8, num_tol)
+eps_rel = factor * eps_abs
 
 # given time interval
-t_final = 3.0
-t_0 = 0.0
+t_0   = 0.0
+t_fin = 1.0
 
 # given initial value
-y_0 = 1.0
+y_0 = y(t_0)
 
-# function estimating an intermediate step h_star
-def h_star_estimate(y_n, fprime_n):
-    return  math.sqrt(2 * (eps_rel*math.fabs(y_n) + eps_abs) / fprime_n(y_n))
+# error arrays
 
-#
-def h_estimate(h_star, y_n, y_star, f_n, fprime_n):
-    C = math.fabs( 1 / (2 * h_star**3) * (f_n(y_n) - f_n(y_star))
-                  -1 / (4 * h_star**2) * (fprime_n(y_n) - fprime_n(y_star)))
-    return math.pow((eps_rel * math.fabs(y_n) + eps_abs)/C, 0.25)
+# Test an adaptive scheme
+# -------------------------------------------------------------------------------------------------------------------- #
+lte = np.zeros(num_tol)
+err = np.zeros(num_tol)
+n   = np.zeros(num_tol)
+f_evals   = np.zeros(num_tol)
 
-def norm(val):
-    return math.fabs(val)
-
-
-t = t_0
-y_n = y_0
-
-yn_array = np.append(np.array([]), np.array([y_0]))
-y_array = np.append(np.array([]), np.array([y_0]))
-t_array = np.append(np.array([]), np.array([t_0]))
-
-#y_array = np.append(np.empty((0,0), float), np.array([y_0]), axis=0)
-#t_array = np.append(np.empty((0,0), float), np.array([t_0]), axis=0)
-
-while t < t_final:
-
+for i in range(0, num_tol):
     print('% -------------------------------------------------------------------------------------------- %')
-    print('t = %4.4e\n' % (t))
+    print(' integration for eps_abs = %4.4e' % (eps_abs[i]))
     print('% -------------------------------------------------------------------------------------------- %')
+    lte[i], err[i], n[i], f_evals[i] = adaptive_4th_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f_n, fprime_n, result_path)
+plot_convergence(lte, err, n, f_evals, order, 'Adaptive scheme', result_path)
 
-    # h_star step
-    h_star = h_star_estimate(y_n, fprime_n)
-    y_star = y_n + h_star / 2 * f_n(y_n) + h_star**2 / 8 * fprime_n(y_n)
-    y_star_1st = y_n + h_star / 2 * f_n(y_n)
-    print('h* = %4.4e\ny* = %4.4e\ny(t+h*) = %4.4e\n' % (h_star, y_star, y(t+h_star)))
 
-    # analysis of the errors
-    err = norm(y_star - y(t+h_star))
-    LTE = norm(y_star - y_star_1st)
-    eps = eps_abs * max(1, norm(y_n))
-    print('err = %4.4e\nLTE = %4.4e\neps = %4.4e\n' %(err, LTE, eps))
+# Test the two-derivatives Runge-Kutta scheme (4th order)
+# -------------------------------------------------------------------------------------------------------------------- #
+length = t_fin - t_0
+h = length * np.array([math.pow(2, -2), math.pow(2, -3), math.pow(2, -4), math.pow(2, -5),
+                       math.pow(2, -6), math.pow(2, -7), math.pow(2, -8), math.pow(2, -9)])
+lte = np.zeros(len(h))
+err = np.zeros(len(h))
+n   = np.zeros(len(h))
+f_evals   = np.zeros(len(h))
 
-    # h step
-    h = h_estimate(h_star, y_n, y_star, f_n, fprime_n)
-    rho = h / h_star
-    y_n1 = y_n + h * (1 - rho**2 + rho**3 / 2) * f_n(y_n) \
-               + h * (rho**2 - rho**3 / 2) * f_n(y_star) \
-               + h / 2 * (1 - 4 * rho / 3 + rho**2 / 2)*fprime_n(y_n) \
-               + h / 2 * (- 2 * rho / 3 + rho**2 / 2)*fprime_n(y_star)
+for i in range(0, len(h)):
+    lte[i], err[i], n[i], f_evals[i] = tdrk_4th_order(t_0, t_fin, h[i], y_0, y, f_n, fprime_n, result_path)
+plot_uniform_convergence(lte, err, n, h, f_evals, order, 'TDRK scheme', result_path)
 
-    y_n1_3rd =  y_n + h * (1 - rho**2) * f_n(y_n) \
-                    + h * rho**2 * f_n(y_star) \
-                    + h / 2 * (1 - 4 * rho / 3)*fprime_n(y_n) \
-                    + h / 2 * (- 2 * rho / 3)*fprime_n(y_star)
-    print('h = %4.4e\ny_{n+1} = %4.4e\ny(t+h) = %4.4e\n' % (h, y_n1, y(t + h)))
-
-    yn_array = np.append(yn_array, np.array([y_n]))
-    y_array = np.append(y_array, np.array([y(t+h)]))
-    t_array = np.append(t_array, np.array([t+h]))
-
-    # analysis of the errors
-    err = norm(y_n1 - y(t+h))
-    LTE = norm(y_n1 - y_n1_3rd)
-    eps = eps_abs * max(1, norm(y_n))
-    print('err = %4.4e\nLTE = %4.4e\neps = %4.4e\n' %(err, LTE, eps))
-
-    # predicted time-step
-    const = 1.1
-    h_new = const * math.pow(math.fabs(eps/LTE), 1/(p+1)) * h
-    print('h_new = %4.4e\n' % (h_new))
-
-    t += h
-    y_n = y_n1
-
-fig, ax = plt.subplots(1, 1, figsize=(8, 4))
-ax.plot(t_array, y_array, 'o-', mew=1, ms=8,
-            mec='w', label=f'y')
-
-ax.plot(t_array, yn_array, '--', mew=1, ms=8,
-            mec='w', label=f'y_n')
-ax.legend()
-
-#ax.set_xlim(t_0, t_final)
-#ax.set_ylim(math.min(yn_array), math.max(yn_array))
-
-plt.show()
+# Test the 4th order Runge-Kutta scheme
+# -------------------------------------------------------------------------------------------------------------------- #
+for i in range(0, len(h)-1):
+    err[i], n[i], f_evals[i] = rk_4th_order(t_0, t_fin, h[i], y_0, y, f_n, result_path)
+plot_uniform_convergence(lte, err, h, n, f_evals, order, '4th order RK scheme', result_path)
