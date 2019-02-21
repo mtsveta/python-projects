@@ -58,7 +58,7 @@ def rk_4th_order(t_0, t_final, h, y_0, y, f_n, result_path):
         y_n = y_n1
         n += 1
 
-    plot_uniform_results(t_array, yn_array, y_array, err_array, result_path)
+    #plot_uniform_results(t_array, yn_array, y_array, err_array, result_path)
     return err, n, f_evals
 
 def tdrk_4th_order(t_0, t_final, h, y_0, y, f_n, fprime_n, result_path):

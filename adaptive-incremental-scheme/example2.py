@@ -1,16 +1,16 @@
 import math
 
 def y(t):
-    return t*math.sin(math.pi*t)
+    return math.exp(-10*t)
 
 def f(t):
-    return -y(t)
+    return -10*y(t)
 
 def fprime(t):
-    return y(t)
+    return 100*y(t)
 
 def f_n(yn):
-    return -yn
+    return -10*yn
 
 def fprime_n(yn):
-    return yn
+    return 100*yn
