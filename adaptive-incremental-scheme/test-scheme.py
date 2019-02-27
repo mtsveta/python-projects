@@ -66,7 +66,7 @@ def test_schemes(example, test_params):
         print(' integration for eps_abs = %4.4e' % (eps_abs[i]))
         print('% -------------------------------------------------------------------------------------------- %')
         lte_adapt[i], err_adapt[i], n_adapt[i], f_evals_adapt[i] \
-            = adaptive_4th_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f_n, fprime_n, result_path, test_params)
+            = adaptive_our_4th_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f_n, fprime_n, result_path, test_params)
     plot_convergence(err_adapt, n_adapt, f_evals_adapt, 'Our adaptive scheme', 'our-scheme-', result_path)
 
     # Test an adaptive scheme

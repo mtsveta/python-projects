@@ -100,7 +100,6 @@ def tdrk_4th_order(t_0, t_final, h, y_0, y, f_n, fprime_n, result_path):
 
         # analysis of the errors
         err = norm(y_n1 - y(t_n + h))
-        lte = norm(y_n1 - y_n1_2nd)
 
         t_array = np.append(t_array, np.array([t_n + h]))
         err_array = np.append(err_array, np.array([err]))
@@ -112,7 +111,7 @@ def tdrk_4th_order(t_0, t_final, h, y_0, y, f_n, fprime_n, result_path):
         n += 1
 
     #plot_uniform_results(t_array, yn_array, y_array, err_array, result_path)
-    return lte, err, n, f_evals
+    return err, n, f_evals
 
 
 def tdrk_5th_order(t_0, t_final, h, y_0, y, f_n, fprime_n, result_path):

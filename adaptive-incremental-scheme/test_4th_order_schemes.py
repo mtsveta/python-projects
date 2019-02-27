@@ -1,6 +1,7 @@
 from adaptive_schemes import *
 from uniform_schemes import *
 from plotting_4th_order_schemes import *
+import time
 
 import example1
 import example2
@@ -41,12 +42,14 @@ def test_schemes(example, test_params):
     #eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10])
     #eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11])
     #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12]) #
-    eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10])
+    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10])
+    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8])
+    eps_abs = np.array([1e-10, 1e-12])
     eps_rel = factor * eps_abs
     num_tol = len(eps_abs)
     # given time interval
     t_0   = 0.0
-    t_fin = 3.0
+    t_fin = 1.0
 
     # given initial value
     y_0 = y(t_0)
@@ -57,113 +60,103 @@ def test_schemes(example, test_params):
     # 1 : tdrk scheme  with our h prediction
     num_of_schemes = 4
     e_loc_adapt = np.zeros((num_of_schemes, num_tol))
-    e_glo_adapt = np.zeros((num_of_schemes, num_tol))
+    e_glob_adapt = np.zeros((num_of_schemes, num_tol))
     n_adapt   = np.zeros((num_of_schemes, num_tol))
     f_evals_adapt = np.zeros((num_of_schemes, num_tol))
     rej_num_adapt = np.zeros((num_of_schemes, num_tol))
+    cpu_time = np.zeros((num_of_schemes, num_tol))
 
     print('% -------------------------------------------------------------------------------------------- %')
     print(' Our scheme (our prediction of h)')
     print('% -------------------------------------------------------------------------------------------- %\n')
 
     for i in range(0, num_tol):
-        e_loc_adapt[0, i], e_glo_adapt[0, i], n_adapt[0, i], f_evals_adapt[0, i], rej_num_adapt[0, i] \
+        t_start = time.time()
+        e_loc_adapt[0, i], e_glob_adapt[0, i], n_adapt[0, i], f_evals_adapt[0, i], rej_num_adapt[0, i] \
             = adaptive_our_4th_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f_n, fprime_n, result_path, test_params)
-
+        cpu_time[0, i] = time.time() - t_start
     print('% -------------------------------------------------------------------------------------------- %')
     print(' TDRK scheme (our prediction of h)')
     print('% -------------------------------------------------------------------------------------------- %\n')
 
     for i in range(0, num_tol):
-        e_loc_adapt[1, i], e_glo_adapt[1, i], n_adapt[1, i], f_evals_adapt[1, i], rej_num_adapt[1, i] \
+        t_start = time.time()
+        e_loc_adapt[1, i], e_glob_adapt[1, i], n_adapt[1, i], f_evals_adapt[1, i], rej_num_adapt[1, i] \
             = adaptive_tdrk_4th_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f_n, fprime_n, result_path,
                                       test_params)
-    # 2 : our scheme with classic h prediction
-    # 3 : tdrk scheme  with classic h prediction
-    # 4 : tdrk scheme  with classic h prediction
+        cpu_time[1, i] = time.time() - t_start
+
+    # 2 : tdrk scheme with classic h prediction
+    # 3 : rk scheme with classic h prediction
 
     print('% -------------------------------------------------------------------------------------------- %')
     print(' TDRK scheme (classic prediction of h)')
     print('% -------------------------------------------------------------------------------------------- %\n')
 
     for i in range(0, num_tol):
-        e_loc_adapt[2, i], e_glo_adapt[2, i], n_adapt[2, i], f_evals_adapt[2, i], rej_num_adapt[2, i] \
+        t_start = time.time()
+        e_loc_adapt[2, i], e_glob_adapt[2, i], n_adapt[2, i], f_evals_adapt[2, i], rej_num_adapt[2, i] \
             = adaptive_classic_tdrk_4th_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f_n, fprime_n, result_path,
                                      test_params)
+        cpu_time[2, i] = time.time() - t_start
+
     print('% -------------------------------------------------------------------------------------------- %')
     print(' RK scheme (classic prediction of h)')
     print('% -------------------------------------------------------------------------------------------- %\n')
 
-    for i in range(0, num_tol):
-        e_loc_adapt[3, i], e_glo_adapt[3, i], n_adapt[3, i], f_evals_adapt[3, i], rej_num_adapt[3, i] \
-            = adaptive_classic_rk_4th_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f_n, fprime_n,
-                                              result_path,
-                                              test_params)
-    plot_convergence(e_loc_adapt, e_glo_adapt, n_adapt, f_evals_adapt, 'classic-h-pred-', result_path)
+    for i in range(0, 3):
+        t_start = time.time()
+        e_loc_adapt[3, i], e_glob_adapt[3, i], n_adapt[3, i], f_evals_adapt[3, i], rej_num_adapt[3, i] \
+            = adaptive_classic_rk_4th_order(eps_rel[i]*1e2, eps_abs[i]*1e2, t_0, t_fin, y_0, y, f_n, fprime_n,
+                                              result_path, test_params)
+        cpu_time[3, i] = time.time() - t_start
+    plot_convergence(e_loc_adapt, e_glob_adapt, n_adapt, f_evals_adapt, cpu_time, 'our-vs-classic-h-pred-', result_path)
 
-    '''
-    plot_summary_adaptive_convergence(e_loc_adapt, e_glo_adapt, n_adapt, f_evals_adapt,
-                                      'Global error', 'global error', 'global-error-')
-    '''
-    '''
-    plot_summary_adaptive_convergence(lte_adapt, n_adapt, f_evals_adapt,
-                                      lte_pred_rej, n_pred_rej, f_evals_pred_rej, result_path,
-                                      'Local truncation error', 'loc. trunc. error', 'lte-')
-    '''
-    '''
     # Test the two-derivatives Runge-Kutta scheme (4th order)
     # -------------------------------------------------------------------------------------------------------------------- #
     length = t_fin - t_0
-    h = length * np.array([math.pow(2, -4), math.pow(2, -5),
+    h = length * np.array([math.pow(2, -2), math.pow(2, -3),
+                           math.pow(2, -4), math.pow(2, -5),
                            math.pow(2, -6), math.pow(2, -7),
                            math.pow(2, -8), math.pow(2, -9)])
-    lte_tdrk4 = np.zeros(len(h))
-    err_tdrk4 = np.zeros(len(h))
-    n_tdrk4   = np.zeros(len(h))
-    f_evals_tdrk4   = np.zeros(len(h))
+    h_length = len(h)
+    num_of_schemes = 2
+    e_loc_unif = np.zeros((num_of_schemes, h_length))
+    e_glob_unif = np.zeros((num_of_schemes, h_length))
+    n_unif = np.zeros((num_of_schemes, h_length))
+    f_evals_unif = np.zeros((num_of_schemes, h_length))
+    cpu_time_unif = np.zeros((num_of_schemes, h_length))
 
-    for i in range(0, len(h)):
-        lte_tdrk4[i], err_tdrk4[i], n_tdrk4[i], f_evals_tdrk4[i] \
+    print('% -------------------------------------------------------------------------------------------- %')
+    print(' TDRK scheme uniform')
+    print('% -------------------------------------------------------------------------------------------- %\n')
+
+    for i in range(0, h_length):
+        t_start = time.time()
+        e_glob_unif[0, i], n_unif[0, i], f_evals_unif[0, i] \
             = tdrk_4th_order(t_0, t_fin, h[i], y_0, y, f_n, fprime_n, result_path)
+        cpu_time_unif[0, i] = time.time() - t_start
 
-    # Test the two-derivatives Runge-Kutta scheme (5th order)
-    # -------------------------------------------------------------------------------------------------------------------- #
-    lte_rk4 = np.zeros(len(h))
-    err_rk4 = np.zeros(len(h))
-    n_rk4   = np.zeros(len(h))
-    f_evals_rk4   = np.zeros(len(h))
+    print('% -------------------------------------------------------------------------------------------- %')
+    print(' RK scheme uniform')
+    print('% -------------------------------------------------------------------------------------------- %\n')
 
-    for i in range(0, len(h)):
-        err_rk4[i], n_rk4[i], f_evals_rk4[i] \
+
+    for i in range(0, h_length):
+        t_start = time.time()
+        e_glob_unif[1, i], n_unif[1, i], f_evals_unif[1, i] \
             = rk_4th_order(t_0, t_fin, h[i], y_0, y, f_n, result_path)
+        cpu_time_unif[1, i] = time.time() - t_start
 
-    lte_tdrk5 = np.zeros(len(h))
-    err_tdrk5 = np.zeros(len(h))
-    n_tdrk5   = np.zeros(len(h))
-    f_evals_tdrk5   = np.zeros(len(h))
+    plot_convergence_summary(e_loc_adapt, e_glob_adapt, n_adapt, f_evals_adapt, cpu_time,
+                                              e_loc_unif, e_glob_unif, n_unif, f_evals_unif, cpu_time_unif,
+                                              'Adaptive & uniform:', result_path)
 
-    for i in range(0, len(h)):
-        lte_tdrk5[i], err_tdrk5[i], n_tdrk5[i], f_evals_tdrk5[i] \
-            = tdrk_5th_order(t_0, t_fin, h[i], y_0, y, f_n, fprime_n, result_path)
-
-    plot_summary_uniform_convergence(err_rk4, n_rk4, f_evals_rk4,
-                                     err_tdrk4, n_tdrk4, f_evals_tdrk4,
-                                     err_tdrk5, n_tdrk5, f_evals_tdrk5,
-                                     'Uniform schemes comparison', result_path)
-
-
-    plot_summary_adaptive_uniform_convergence(err_adapt, n_adapt, f_evals_adapt,
-                                      err_pred_rej, n_pred_rej, f_evals_pred_rej,
-                                      err_rk4, n_rk4, f_evals_rk4,
-                                      err_tdrk4, n_tdrk4, f_evals_tdrk4,
-                                      err_tdrk5, n_tdrk5, f_evals_tdrk5,
-                                      'Adaptive & uniform schemes comparison', result_path)
-    '''
 if __name__== "__main__":
 
     examples = [1]
     #examples = [1, 2, 3, 4, 5, 6, 7]
     test_params = dict(adaptive_stepping='our_prediction',  # 'classic_prediction'
-                       middle_step_order=2)
+                       middle_step_order=4)
     for example_num in range(0, len(examples)):
         test_schemes(examples[example_num], test_params)
