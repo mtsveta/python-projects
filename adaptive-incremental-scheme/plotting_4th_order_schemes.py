@@ -18,10 +18,10 @@ def create_results_folder(directory):
     # sys.stdout = open(full_directory + '/log-results.txt', "w+")
     return full_directory
 
-def plot_results(time, approx, exact, h, e_glo, e_loc, result_path):
+def plot_results(time, approx, exact, h, err, result_path):
 
     # plot comparison of approximate and exact solution wrt time
-    fig, ax = plt.subplots(4, 1, figsize=(6, 12))
+    fig, ax = plt.subplots(3, 1, figsize=(6, 12))
     ax[0].plot(time, approx,
                color='orchid',
                linestyle='dashed',
@@ -39,6 +39,8 @@ def plot_results(time, approx, exact, h, e_glo, e_loc, result_path):
     ax[0].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
     ax[0].set_xlabel(r'$t$')
     ax[0].set_ylabel(r'$y_n, y$')
+    #plt.title('Comparison of y_n to exact y(t)')
+    ax[0].set_title(r'Comparison of $y_n$ to exact $y(t)$')
     ax[0].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
     # time-steps wrt time
@@ -48,37 +50,26 @@ def plot_results(time, approx, exact, h, e_glo, e_loc, result_path):
                marker='*',
                markerfacecolor='tan',
                markersize=2,
-               label=f'$h$')
+               label=f'$h$ by out approach')
     ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
     ax[1].set_xlabel('$t$')
-    ax[1].set_ylabel('predicted $h$')
+    ax[1].set_ylabel('$h$')
+    ax[1].set_title('Predicted $h$')
     ax[1].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
     # time-steps wrt time
-    ax[2].semilogy(time[1:], e_glo,
+    ax[2].semilogy(time[1:],  err,
                    color='red',
                    linestyle=':',
                    marker='',
                    markerfacecolor='tan',
                    markersize=6,
-                   label=r'global $e$')
+                   label=r'$e$')
     ax[2].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
     ax[2].set_xlabel('$t$')
-    ax[2].set_ylabel('global $e$')
+    ax[2].set_ylabel('$e = \|y_{n+1} - y(t_{final})\|$')
+    ax[2].set_title('Error')
     ax[2].grid(True, color='gray', linestyle=':', linewidth=0.5)
-
-    # time-steps wrt time
-    ax[3].semilogy(time[1:], e_loc,
-                   color='red',
-                   linestyle=':',
-                   marker='',
-                   markerfacecolor='tan',
-                   markersize=6,
-                   label=r'local $e$')
-    ax[3].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
-    ax[3].set_xlabel('$t$')
-    ax[3].set_ylabel('local $e$')
-    ax[3].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
     plt.subplots_adjust(right=0.6)
     plt.show()
@@ -118,127 +109,163 @@ def plot_uniform_results(time, approx, exact, err, result_path):
                 transparent=True, bbox_inches='tight', pad_inches=0.1,
                 frameon=None, metadata=None)
 
-def plot_convergence(err, n, f_evals, title, tag, result_path):
+def plot_convergence(e_loc, e_glo, n, f_evals, tag, result_path):
 
-    # plot local truncation error wrt number of steps
-    fig, ax = plt.subplots(2, 1, figsize=(6, 8))
-    ax[0].loglog(n, err,
+    fig, ax = plt.subplots(3, 1, figsize=(6, 8))
+    # plot global errors wrt number of steps
+    ax[0].loglog(n[0, :], e_glo[0, :],
                  color='green',
                  linestyle='dashed',
                  marker='o',
                  markerfacecolor='green',
                  markersize=6,
-                 label=r'$e = \|y_{n+1} - y(t_{final})\|$')
-    ax[0].loglog(n, np.power(n, -4),
-                 color='tan',
-                 linestyle='dashed',
-                 marker='',
-                 markerfacecolor='tan',
-                 markersize=6,
-                 label=r'$4$th order conv.')
-    ax[0].loglog(n, np.power(n, -3),
-                 color='gray',
-                 linestyle='dashed',
-                 markerfacecolor='gray',
-                 label=r'$3$th order conv.')
-
-    ax[0].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
-    ax[0].set_xlabel(r'number of steps')
-    ax[0].set_ylabel(r'$e$')
-    ax[0].set_title('Errors vs. number of steps / func. evaluations')
-    ax[0].grid(True, color='gray', linestyle=':', linewidth=0.5)
-
-    # plot global error wrt number of functions evaluation
-    ax[1].loglog(f_evals, err,
-                 color='blue',
-                 linestyle=':',
-                 marker='o',
-                 markerfacecolor='blue',
-                 markersize=6,
-                 label=r'$e = \|y_{n+1} - y(t_{final})\|$')
-    ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
-
-    ax[1].set_xlabel(r'func. evaluations')
-    ax[1].set_ylabel(r'$e = \|y_{n+1} - y(t_{final})\|$')
-    ax[1].grid(True, color='gray', linestyle=':', linewidth=0.5)
-
-    plt.subplots_adjust(right=0.6)
-    plt.show()
-    fig.savefig(result_path + '/' + tag + 'adaptive-convergence-%d.eps' % (len(err)),
-                dpi=1000, facecolor='w', edgecolor='w',
-                orientation='portrait', format='eps',
-                transparent=True, pad_inches=0.1)
-
-def plot_convergence_(err, n, f_evals, title, tag, result_path):
-
-    # plot local truncation error wrt number of steps
-    fig, ax = plt.subplots(2, 1, figsize=(6, 8))
-    ax[0].loglog(n[0, :], err[0, :],
-                 color='green',
-                 linestyle='dashed',
-                 marker='o',
-                 markerfacecolor='green',
-                 markersize=6,
-                 label=r'4th tdrk')
-    ax[0].loglog(n[1, :], err[1, :],
+                 label=r'our scheme (our h pred.)')
+    ax[0].loglog(n[1, :], e_glo[1, :],
                  color='blue',
                  linestyle='dashed',
-                 marker='o',
+                 marker='^',
                  markerfacecolor='blue',
                  markersize=6,
-                 label=r'5th tdrk')
+                 label=r'tdrk (our h pred.)')
+    ax[0].loglog(n[2, :], e_glo[2, :],
+                 color='darkred',
+                 linestyle='dashed',
+                 marker='d',
+                 markerfacecolor='darkred',
+                 markersize=6,
+                 label=r'tdrk (classic h pred.)')
+    ax[0].loglog(n[3, :], e_glo[3, :],
+                 color='purple',
+                 linestyle='dashed',
+                 marker='x',
+                 markerfacecolor='purple',
+                 markersize=6,
+                 label=r'rk (classic h pred.)')
+    # plot different convergences
     ax[0].loglog(n[1, :], np.power(n[1, :], -3),
                  color='gray',
                  linestyle='dashed',
                  marker='',
                  markerfacecolor='gray',
                  markersize=6,
-                 label=r'$3$th order conv.')
+                 label=r'$3$th order')
     ax[0].loglog(n[1, :], np.power(n[1, :], -4),
                  color='tan',
                  linestyle='dashed',
                  marker='',
                  markerfacecolor='tan',
                  markersize=6,
-                 label=r'$4$th order conv.')
-    ax[0].loglog(n[1, :], np.power(n[1, :], -5),
-                 color='lavender',
-                 linestyle='dashed',
-                 marker='',
-                 markerfacecolor='lavender',
-                 markersize=6,
-                 label=r'$5$th order conv.')
+                 label=r'$4$th order')
 
     ax[0].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
-    ax[0].set_xlabel(r'number of steps, $N$')
-    ax[0].set_ylabel(r'$e$')
-    ax[0].set_title('Errors vs. number of steps / funcs. evals')
+    ax[0].set_xlabel(r'number of steps')
+    ax[0].set_ylabel(r'global $e$')
+    ax[0].set_title('Adaptive schemes: errors vs. number of steps / funcs. evals')
     ax[0].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
     # plot global error wrt number of functions evaluation
-    ax[1].loglog(f_evals[0, :], err[0, :],
+    ax[1].loglog(n[0, :], e_loc[0, :],
                  color='green',
-                 linestyle=':',
+                 linestyle='dashed',
                  marker='o',
                  markerfacecolor='green',
                  markersize=6,
-                 label=r'4th tdrk')
-    ax[1].loglog(f_evals[1, :], err[1, :],
+                 label=r'our scheme (our h pred.)')
+    ax[1].loglog(n[1, :], e_loc[1, :],
                  color='blue',
-                 linestyle=':',
-                 marker='o',
+                 linestyle='dashed',
+                 marker='^',
                  markerfacecolor='blue',
                  markersize=6,
-                 label=r'5th tdrk')
+                 label=r'tdrk (our h pred.)')
+    ax[1].loglog(n[2, :], e_loc[2, :],
+                 color='darkred',
+                 linestyle='dashed',
+                 marker='d',
+                 markerfacecolor='darkred',
+                 markersize=6,
+                 label=r'tdrk (classic h pred.)')
+    ax[1].loglog(n[3, :], e_loc[3, :],
+                 color='purple',
+                 linestyle='dashed',
+                 marker='x',
+                 markerfacecolor='purple',
+                 markersize=6,
+                 label=r'rk (classic h pred.)')
+    # plot different convergences
+    ax[1].loglog(n[1, :], np.power(f_evals[1, :], -3),
+                 color='gray',
+                 linestyle='dashed',
+                 marker='',
+                 markerfacecolor='gray',
+                 markersize=6,
+                 label=r'$3$th order')
+    ax[1].loglog(n[1, :], np.power(f_evals[1, :], -4),
+                 color='tan',
+                 linestyle='dashed',
+                 marker='',
+                 markerfacecolor='tan',
+                 markersize=6,
+                 label=r'$4$th order')
     ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
 
     ax[1].set_xlabel(r'func. evaluations')
-    ax[1].set_ylabel(r'$e = \|y_{n+1} - y(t_{final})\|$')
+    ax[1].set_ylabel(r'global error $e$')
     ax[1].grid(True, color='gray', linestyle=':', linewidth=0.5)
+
+    # plot global error wrt number of functions evaluation
+    ax[2].loglog(f_evals[0, :], e_glo[0, :],
+                 color='green',
+                 linestyle='dashed',
+                 marker='o',
+                 markerfacecolor='green',
+                 markersize=6,
+                 label=r'our scheme (our h pred.)')
+    ax[2].loglog(f_evals[1, :], e_glo[1, :],
+                 color='blue',
+                 linestyle='dashed',
+                 marker='^',
+                 markerfacecolor='blue',
+                 markersize=6,
+                 label=r'tdrk (our h pred.)')
+    ax[2].loglog(f_evals[2, :], e_glo[2, :],
+                 color='darkred',
+                 linestyle='dashed',
+                 marker='d',
+                 markerfacecolor='darkred',
+                 markersize=6,
+                 label=r'tdrk (classic h pred.)')
+    ax[2].loglog(f_evals[3, :], e_glo[3, :],
+                 color='purple',
+                 linestyle='dashed',
+                 marker='x',
+                 markerfacecolor='purple',
+                 markersize=6,
+                 label=r'rk (classic h pred.)')
+    # plot different convergences
+    ax[2].loglog(f_evals[1, :], np.power(f_evals[1, :], -3),
+                 color='gray',
+                 linestyle='dashed',
+                 marker='',
+                 markerfacecolor='gray',
+                 markersize=6,
+                 label=r'$3$th order')
+    ax[2].loglog(f_evals[1, :], np.power(f_evals[1, :], -4),
+                 color='tan',
+                 linestyle='dashed',
+                 marker='',
+                 markerfacecolor='tan',
+                 markersize=6,
+                 label=r'$4$th order')
+    ax[2].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
+
+    ax[2].set_xlabel(r'func. evaluations')
+    ax[2].set_ylabel(r'global error $e$')
+    ax[2].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
     plt.subplots_adjust(right=0.6)
     plt.show()
-    fig.savefig(result_path + '/' + tag + 'adaptive-convergences-%d.eps' % (len(err)),
+    fig.savefig(result_path + '/' + tag + 'adaptive-conv-%d.eps' % (len(e_glo[0, :])),
                 dpi=1000, facecolor='w', edgecolor='w',
                 orientation='portrait', format='eps',
                 transparent=True, bbox_inches='tight', pad_inches=0.1)

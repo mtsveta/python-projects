@@ -9,8 +9,8 @@ def f(t):
 def fprime(t):
     return 100*y(t)
 
-def f_n(yn):
+def f_n(tn, yn):
     return -10*yn
 
-def fprime_n(yn):
+def fprime_n(tn, yn):
     return 100*yn
