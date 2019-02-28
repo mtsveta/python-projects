@@ -9,13 +9,13 @@ def get_project_path():
 
 def create_results_folder(directory):
     # create the full directory of the result folder
-    full_directory = get_project_path() + '/results/' + directory
+    full_directory = get_project_path() + '/results-2nd-order-middle-step/' + directory
 
     # if directory doesn't exist
     if not os.path.exists(full_directory):
         os.makedirs(full_directory)
     # writing to the log file
-    # sys.stdout = open(full_directory + '/log-results.txt', "w+")
+    # sys.stdout = open(full_directory + '/log-results-2nd-order-middle-step.txt', "w+")
     return full_directory
 
 def plot_results(time, approx, exact, h, e_glo, e_loc, result_path):
@@ -112,7 +112,7 @@ def plot_uniform_results(time, approx, exact, err, result_path):
 
     plt.subplots_adjust(right=0.6)
     plt.show()
-    plt.savefig(result_path + '/tdrk-approx-error-%d.eps' %(len(time)),
+    plt.savefig(result_path + '/unform-schemes-error-%d.eps' %(len(time)),
                 dpi=1000, facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format='eps',
                 transparent=True, bbox_inches='tight', pad_inches=0.1,

@@ -9,7 +9,6 @@ import example3
 import example4
 import example5
 import example6
-import example7
 
 import numpy as np
 
@@ -37,19 +36,20 @@ def test_schemes(example, test_params):
     order = 4
 
     # given tolerances
-    #factor  = 1e-4 # 1 / max_{t_0, t_fin}(y)
-    factor = 1e0
+    factor  = 1e0 # 1 / max_{t_0, t_fin}(y)
+    #factor = 1e0
     #eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10])
     #eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11])
-    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12]) #
+    eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14]) #
     #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10])
     #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8])
-    eps_abs = np.array([1e-10, 1e-12])
-    eps_rel = factor * eps_abs
+    #eps_abs = np.array([1e-10, 1e-12])
+    #eps_abs = np.array([1e-12])
     num_tol = len(eps_abs)
+    eps_rel = factor * eps_abs # 1e-16 * np.ones(num_tol)  #
     # given time interval
     t_0   = 0.0
-    t_fin = 1.0
+    t_fin = 3.0
 
     # given initial value
     y_0 = y(t_0)
@@ -110,17 +110,22 @@ def test_schemes(example, test_params):
             = adaptive_classic_rk_4th_order(eps_rel[i]*1e2, eps_abs[i]*1e2, t_0, t_fin, y_0, y, f_n, fprime_n,
                                               result_path, test_params)
         cpu_time[3, i] = time.time() - t_start
-    plot_convergence(e_loc_adapt, e_glob_adapt, n_adapt, f_evals_adapt, cpu_time, 'our-vs-classic-h-pred-', result_path)
+
+    plot_convergence(e_loc_adapt, e_glob_adapt, n_adapt, f_evals_adapt, cpu_time, 'our-vs-classic-h-pred-',
+                         result_path)
 
     # Test the two-derivatives Runge-Kutta scheme (4th order)
     # -------------------------------------------------------------------------------------------------------------------- #
     length = t_fin - t_0
-    h = length * np.array([math.pow(2, -2), math.pow(2, -3),
-                           math.pow(2, -4), math.pow(2, -5),
-                           math.pow(2, -6), math.pow(2, -7),
-                           math.pow(2, -8), math.pow(2, -9)])
+    h = length * np.array([math.pow(2, -2), math.pow(2, -4), math.pow(2, -6), math.pow(2, -7),
+                           math.pow(2, -8), math.pow(2, -10), math.pow(2, -12), math.pow(2, -14)])
     h_length = len(h)
-    num_of_schemes = 2
+    num_of_schemes = 5
+
+    # 0 : tdrk uniform
+    # 1 : rk uniform
+    # 2 : our scheme with different rho
+
     e_loc_unif = np.zeros((num_of_schemes, h_length))
     e_glob_unif = np.zeros((num_of_schemes, h_length))
     n_unif = np.zeros((num_of_schemes, h_length))
@@ -141,22 +146,60 @@ def test_schemes(example, test_params):
     print(' RK scheme uniform')
     print('% -------------------------------------------------------------------------------------------- %\n')
 
-
     for i in range(0, h_length):
         t_start = time.time()
         e_glob_unif[1, i], n_unif[1, i], f_evals_unif[1, i] \
             = rk_4th_order(t_0, t_fin, h[i], y_0, y, f_n, result_path)
         cpu_time_unif[1, i] = time.time() - t_start
 
+    print('% -------------------------------------------------------------------------------------------- %')
+    print(' Our scheme uniform, rho = 2')
+    print('% -------------------------------------------------------------------------------------------- %\n')
+    rho = 2.0
+    for i in range(0, h_length):
+        t_start = time.time()
+        e_glob_unif[2, i], n_unif[2, i], f_evals_unif[2, i] \
+            = our_scheme_4th_order(t_0, t_fin, h[i], y_0, y, f_n, fprime_n, test_params, rho, result_path)
+        cpu_time_unif[2, i] = time.time() - t_start
+
+    print('% -------------------------------------------------------------------------------------------- %')
+    print(' Our scheme uniform, rho = 3')
+    print('% -------------------------------------------------------------------------------------------- %\n')
+
+    rho = 3.0
+    for i in range(0, h_length):
+        t_start = time.time()
+        e_glob_unif[3, i], n_unif[3, i], f_evals_unif[3, i] \
+            = our_scheme_4th_order(t_0, t_fin, h[i], y_0, y, f_n, fprime_n, test_params, rho, result_path)
+        cpu_time_unif[3, i] = time.time() - t_start
+
+    print('% -------------------------------------------------------------------------------------------- %')
+    print(' Our scheme uniform, rho = 4')
+    print('% -------------------------------------------------------------------------------------------- %\n')
+
+    rho = 4.0
+    for i in range(0, h_length):
+        t_start = time.time()
+        e_glob_unif[4, i], n_unif[4, i], f_evals_unif[4, i] \
+            = our_scheme_4th_order(t_0, t_fin, h[i], y_0, y, f_n, fprime_n, test_params, rho, result_path)
+        cpu_time_unif[4, i] = time.time() - t_start
+
+    plot_uniform_results(e_loc_unif, e_glob_unif, n_unif, f_evals_unif, cpu_time_unif, '', result_path)
+
     plot_convergence_summary(e_loc_adapt, e_glob_adapt, n_adapt, f_evals_adapt, cpu_time,
-                                              e_loc_unif, e_glob_unif, n_unif, f_evals_unif, cpu_time_unif,
-                                              'Adaptive & uniform:', result_path)
+                             e_loc_unif, e_glob_unif, n_unif, f_evals_unif, cpu_time_unif,
+                             'adaptive-and-uniform-', result_path)
 
 if __name__== "__main__":
 
-    examples = [1]
-    #examples = [1, 2, 3, 4, 5, 6, 7]
-    test_params = dict(adaptive_stepping='our_prediction',  # 'classic_prediction'
-                       middle_step_order=4)
+    examples = [1, 2, 3, 4, 5, 6]
+    test_params = dict(middle_step_order = 4,
+                       detailed_log = False,
+                       polynomial_comparison = False)
+
     for example_num in range(0, len(examples)):
+        print('% -------------------------------------------------------------------------------------------- %')
+        print(' Example %d' % examples[example_num])
+        print('% -------------------------------------------------------------------------------------------- %\n')
+
         test_schemes(examples[example_num], test_params)

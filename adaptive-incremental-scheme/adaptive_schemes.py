@@ -57,7 +57,12 @@ def adaptive_our_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n
         # --------------------------------------------------------------------------------------------------------------
         # predict h_star step
         if fprime_n_val != 0:
-            h_star = h_star_estimate_2nd(fprime_n_val, eps_n)
+            # TODO: figure out what is the best factor for the convergence
+            factor = 1e5
+            if eps_n <= 1e-8:
+                h_star = h_star_estimate_2nd(fprime_n_val, eps_n * factor)
+            else:
+                h_star = h_star_estimate_2nd(fprime_n_val, eps_n)
         else:
             h_star = h_star_estimate_1st(f_n_val, eps_n)
 
@@ -66,10 +71,10 @@ def adaptive_our_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n
             h_star = t_final - t_n
 
         if test_params['middle_step_order'] == 2:
-            # reconstruct approximation y_star with the 2nd order tdrk
+            # reconstruct apprimation y_star with the 2nd order tdrk
             y_star = y_n + h_star * f_n_val + h_star ** 2 / 2 * fprime_n_val
         elif test_params['middle_step_order'] == 4:
-            # reconstruct approximation y_star with the 4th order tdrk
+            # reconstruct apprimation y_star with the 4th order tdrk
             t_aux = h_star / 2
             y_aux = y_n + t_aux * f_n_val + t_aux ** 2 / 2 * fprime_n_val
             fprime_aux_val = fprime_n(t_aux, y_aux)
@@ -79,8 +84,6 @@ def adaptive_our_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n
                      + h_star ** 2 / 3 * fprime_aux_val
             f_evals += 1
 
-        #y_star_ = y(t_n + h_star)
-        #y_star = y_n + h_star * f(t_n) + h_star**2 / 2 * fprime(t_n) + h_star**3 / 6 * d2fdt2(t_n) + h_star**4 / 24 * d3fdt3(t_n)
         # evaluate f_* and (f')_*
         f_star_val = f_n(t_n + h_star, y_star)
         fprime_star_val = fprime_n(t_n + h_star, y_star)
@@ -95,7 +98,7 @@ def adaptive_our_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n
         if t_n + h > t_final:
             # correct the step
             h = t_final - t_n
-        # reconstruct approximation y_{n+1} of the 4th order
+        # reconstruct apprimation y_{n+1} of the 4th order
         rho = h / h_star
 
         y_n1 = y_n \
@@ -103,83 +106,74 @@ def adaptive_our_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n
                + h * (rho ** 2 - rho ** 3 / 2) * f_star_val \
                + h**2 / 2 * (1 - 4 * rho / 3 + rho ** 2 / 2) * fprime_n_val \
                + h**2 / 2 * (- 2 * rho / 3 + rho ** 2 / 2) * fprime_star_val
-        # reconstruct approximation y_{n+1} of the 3rd order
+
+        # reconstruct apprimation y_{n+1} of the 3rd order
         y_n1_3rd = y_n \
                    + h * (1 - rho ** 2) * f_n_val \
                    + h * rho ** 2 * f_star_val \
                    + h**2 / 2 * (1 - 4 * rho / 3) * fprime_n_val \
                    + h**2 / 2 * (- 2 * rho / 3) * fprime_star_val
 
-        '''
-        print('% -------------------------------------------------------------------------------------------- %')
-        print('  t = %4.4e, eps_n = %4.4e\n' % (t_n, eps_n))
-        '''
-        #'''
-        k_1 = 1 / 2 * (2 - 2 * rho**2 + rho**3)
-        k_2 = 1 / 2 * (2 * rho**2 - rho**3)
-        k_3 = 1 / 6 * (6 - 8 * rho + 3 * rho**2)
-        k_4 = 1 / 6 * (- 4 * rho + 3 * rho**2)
+        if test_params['polynomial_comparison']:
+            # comparison to the 4th order polynomials
+            times = np.zeros(5)     # times of the comparison
+            p4 = np.zeros(5)        # 4th order polynomial
+            appr = np.zeros(5)      # our apprimatin
 
-       
-        b_ = (k_1 + k_2) * f(t_n)
-        c_ = 1 / h**2 * (h * h_star * k_2 + 1 / 2 * h**2 * (k_3 + k_4)) * fprime(t_n)
-        d_ = 1 / h**3 * (1 / 2 * h * h_star**2 * k_2 + 1 / 2 * h**2 * h_star * k_4) * d2fdt2(t_n)
-        e_ = 1 / h**4 * (1 / 6 * h * h_star**3 * k_2 + 1 / 4 * h**2 * h_star**2 * k_4) * d3fdt3(t_n)
+            k_1 = 1 / 2 * (2 - 2 * rho**2 + rho**3)
+            k_2 = 1 / 2 * (2 * rho**2 - rho**3)
+            k_3 = 1 / 6 * (6 - 8 * rho + 3 * rho**2)
+            k_4 = 1 / 6 * (- 4 * rho + 3 * rho**2)
 
-        b = f(t_n)
-        c = fprime(t_n) / 2
-        d = d2fdt2(t_n) / 6
-        e = d3fdt3(t_n) / 24
+            b_ = (k_1 + k_2) * f(t_n)
+            c_ = 1 / h**2 * (h * h_star * k_2 + 1 / 2 * h**2 * (k_3 + k_4)) * fprime(t_n)
+            d_ = 1 / h**3 * (1 / 2 * h * h_star**2 * k_2 + 1 / 2 * h**2 * h_star * k_4) * d2fdt2(t_n)
+            e_ = 1 / h**4 * (1 / 6 * h * h_star**3 * k_2 + 1 / 4 * h**2 * h_star**2 * k_4) * d3fdt3(t_n)
 
-        def p(t):
-            return y_n + b * (t - t_n) + c * (t - t_n)**2 + d * (t - t_n)**3 + e * (t - t_n)**4
+            b = f(t_n)
+            c = fprime(t_n) / 2
+            d = d2fdt2(t_n) / 6
+            e = d3fdt3(t_n) / 24
 
-        times = np.zeros(5)
-        times[0] = t_n
-        times[1] = t_n + h / 4
-        times[2] = t_n + h / 2
-        times[3] = t_n + 3 * h / 4
-        times[4] = t_n + h
+            def p(t):
+                return y_n + b * (t - t_n) + c * (t - t_n)**2 + d * (t - t_n)**3 + e * (t - t_n)**4
 
-        p4 = np.zeros(5)
+            def our_appr(t):
+                h = t - t_n
+                rho = h / h_star
+                return y_n \
+                       + h * (1 - rho ** 2 + rho ** 3 / 2) * f_n_val \
+                       + h * (rho ** 2 - rho ** 3 / 2) * f_star_val \
+                       + h**2 / 2 * (1 - 4 * rho / 3 + rho ** 2 / 2) * fprime_n_val \
+                       + h**2 / 2 * (- 2 * rho / 3 + rho ** 2 / 2) * fprime_star_val
 
-        p4[0] = p(times[0])
-        p4[1] = p(times[1])
-        p4[2] = p(times[2])
-        p4[3] = p(times[3])
-        p4[4] = p(times[4])
+            times[0] = t_n
+            times[1] = t_n + h / 4
+            times[2] = t_n + h / 2
+            times[3] = t_n + 3 * h / 4
+            times[4] = t_n + h
 
-        def our_approx(t):
-            h = t - t_n
-            rho = h / h_star
-            return y_n \
-                   + h * (1 - rho ** 2 + rho ** 3 / 2) * f_n_val \
-                   + h * (rho ** 2 - rho ** 3 / 2) * f_star_val \
-                   + h**2 / 2 * (1 - 4 * rho / 3 + rho ** 2 / 2) * fprime_n_val \
-                   + h**2 / 2 * (- 2 * rho / 3 + rho ** 2 / 2) * fprime_star_val
+            p4[0] = p(times[0])
+            p4[1] = p(times[1])
+            p4[2] = p(times[2])
+            p4[3] = p(times[3])
+            p4[4] = p(times[4])
 
-        approx = np.zeros(5)
-        approx[0] = our_approx(times[0])
-        approx[1] = our_approx(times[1])
-        approx[2] = our_approx(times[2])
-        approx[3] = our_approx(times[3])
-        approx[4] = our_approx(times[4])
+            appr[0] = our_appr(times[0])
+            appr[1] = our_appr(times[1])
+            appr[2] = our_appr(times[2])
+            appr[3] = our_appr(times[3])
+            appr[4] = our_appr(times[4])
 
-        accum += p4[4] - approx[4]
-        y_n1 += p4[4] - approx[4]
+            accum += appr[4] - p4[4]  # accumulated errors
+            # y_n1 -= appr[4] - p4[4]   # correction of the approximation
 
-        print('  b_ = %4.4e\tc_ = %4.4e\td_ = %4.4e\te_ = %4.4e' % (b_, c_, d_, e_))
-        print('  b  = %4.4e\tc  = %4.4e\td  = %4.4e\te  = %4.4e\n'% (b, c, d, e))
+            if test_params['detailed_log']:
+                print('  b_ = %4.4e\tc_ = %4.4e\td_ = %4.4e\te_ = %4.4e' % (b_, c_, d_, e_))
+                print('  b  = %4.4e\tc  = %4.4e\td  = %4.4e\te  = %4.4e\n' % (b, c, d, e))
 
-        print('  e(t_n) = %4.4e\te(t_n + h/4) = %4.4e\te(t_n + h/2) = %4.4e\te(t_n + 3*h/4) = %4.4e\te(t_n + h) = %4.4e\n'
-              % (norm(p4[0] - approx[0]), norm(p4[1] - approx[1]), norm(p4[2] - approx[2]), norm(p4[3] - approx[3]), norm(p4[4] - approx[4])))
-
-        '''
-        plt.plot(times, p4, label="p4")
-        plt.plot(times, approx, label="our approx.")
-        plt.legend()
-        plt.show()
-        '''
+                print('  e(t_n) = %4.4e\te(t_n + h/4) = %4.4e\te(t_n + h/2) = %4.4e\te(t_n + 3*h/4) = %4.4e\te(t_n + h) = %4.4e\n'
+                      % ((appr[0] - p4[0]), (appr[1] - p4[1]), (appr[2] - p4[2]), (appr[3] - p4[3]), (appr[4] - p4[4])))
 
         # analysis of the errors
         e_glob = norm(y_n1 - y(t_n + h))
@@ -193,9 +187,13 @@ def adaptive_our_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n
         else:
             h_new = 1.1 * const * h
 
-        print('  h   = %4.4e rho = %3.2f (h clas = %4.4e) e_glob = %4.4e\te_loc = %4.4e\n' \
-              % (h, rho, h_new, e_glob, e_loc))
-        print('% -------------------------------------------------------------------------------------------- %')
+        if test_params['detailed_log']:
+            print('  t = %4.4e, eps_n = %4.4e\n' % (t_n, eps_n))
+            print('  h* = %4.4e ' \
+                  % (h_star))
+            print('  h  = %4.4e rho = %3.2f (h clas = %4.4e) e_glob = %4.4e\te_loc = %4.4e\n' \
+                  % (h, rho, h_new, e_glob, e_loc))
+            print('% -------------------------------------------------------------------------------------------- %')
 
         t_array = np.append(t_array, np.array([t_n + h]))
         h_array = np.append(h_array, np.array([h]))
@@ -212,7 +210,6 @@ def adaptive_our_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n
 
     #if n < 100: plot_results(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array, result_path)
     print('  eps_abs = %4.4e\te_glob = %4.4e\te_loc = %4.4e\taccum = %4.4e\n' % (eps_abs, e_glob, e_loc, accum))
-    #print('% ******************************************************************************************** %')
 
     return e_loc, e_glob, n, f_evals, rej_num
 
@@ -261,7 +258,7 @@ def adaptive_tdrk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_
             # correct the step
             h = t_final - t_n
 
-        # reconstruct approximation y_star with the 2nd order tdrk
+        # reconstruct apprimation y_star with the 2nd order tdrk
         y_star = y_n + h / 2 * f_n_val + h ** 2 / 8 * fprime_n_val
         y_1st = y_n + h / 2 * f_n_val
 
@@ -270,12 +267,12 @@ def adaptive_tdrk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_
         fprime_star_val = fprime_n(t_n + h / 2, y_star)
         f_evals += 2
 
-        # reconstruct approximation y_{n+1} of the 4th order
+        # reconstruct apprimation y_{n+1} of the 4th order
         y_n1 = y_n \
                + h * f_n_val \
                + h**2 / 6 * fprime_n_val \
                + h**2 / 3 * fprime_star_val
-        # reconstruct approximation y_{n+1} of the 3rd order
+        # reconstruct apprimation y_{n+1} of the 3rd order
 
         y_aux_3 = y_n + h * f_n_val + h ** 2 * (fprime_n_val / 6 + fprime_star_val / 3)
         fprime_3_val = fprime_n(t_n + h, y_aux_3)
@@ -307,15 +304,14 @@ def adaptive_tdrk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_
         yn_array = np.append(yn_array, np.array([y_n1]))
         y_array = np.append(y_array, np.array([y(t_n + h)]))
 
-        '''
-        print('t = %4.4e, eps_n = %4.4e' % (t_n, eps_n))
-        print('% -------------------------------------------------------------------------------------------- %')
+        if test_params['detailed_log']:
+            print('t = %4.4e, eps_n = %4.4e' % (t_n, eps_n))
+            print('% -------------------------------------------------------------------------------------------- %')
 
-        print('h_* = %4.4e                       e_glob = %4.4e\te_loc = %4.4e' \
-              % (h / 2, norm(y_star - y(t_n + h / 2)), norm(y_star - y_1st)))
-        print('h   = %4.4e (h clas = %4.4e) e_glob = %4.4e\te_loc = %4.4e\n' \
-              % (h, h_new, e_glob, e_loc))
-        '''
+            print('h_* = %4.4e                       e_glob = %4.4e\te_loc = %4.4e' \
+                  % (h / 2, norm(y_star - y(t_n + h / 2)), norm(y_star - y_1st)))
+            print('h   = %4.4e (h clas = %4.4e) e_glob = %4.4e\te_loc = %4.4e\n' \
+                  % (h, h_new, e_glob, e_loc))
         t_n += h
         y_n = y_n1
         n += 1
@@ -365,7 +361,7 @@ def adaptive_classic_tdrk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n,
             # correct the step
             h = t_final - t_n
 
-        # reconstruct approximation y_star with the 2nd order tdrk
+        # reconstruct apprimation y_star with the 2nd order tdrk
         y_star = y_n + h / 2 * f_n_val + h ** 2 / 8 * fprime_n_val
 
         # evaluate f_* and (f')_*
@@ -373,12 +369,12 @@ def adaptive_classic_tdrk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n,
         fprime_star_val = fprime_n(t_n + h / 2, y_star)
         f_evals += 2
 
-        # reconstruct approximation y_{n+1} of the 4th order
+        # reconstruct apprimation y_{n+1} of the 4th order
         y_n1 = y_n \
                + h * f_n_val \
                + h**2 / 6 * fprime_n_val \
                + h**2 / 3 * fprime_star_val
-        # reconstruct approximation y_{n+1} of the 3rd order
+        # reconstruct apprimation y_{n+1} of the 3rd order
         #y_aux_3 = y_n + h * f_n_val + h ** 2 * (fprime_n_val / 6 + fprime_star_val / 3)
         #fprime_3_val = fprime_n(t_n + h, y_aux_3)
         #y_n1_3rd = y_n + h * f_n_val + h ** 2 * (
@@ -423,11 +419,11 @@ def adaptive_classic_tdrk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n,
         else:
             #h_pred = const * math.pow(math.fabs(eps_abs / e_loc), 1 / (p + 1)) * h
             h_pred = 0.5 * math.pow(math.fabs(eps_abs / e_loc), 1 / (p + 1)) * h
-            print('y_n1 is rejected: decreasen step from h = %4.4e to h_new = %4.4e' % (h, h_pred))
+            #print('y_n1 is rejected: decreasen step from h = %4.4e to h_new = %4.4e' % (h, h_pred))
             rej_num += 1
 
     #if n < 100: plot_results(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array, result_path)
-    print('eps_abs = %4.4e\te_glob = %4.4e\te_loc = %4.4e\n' % (eps_abs, e_glob, e_loc))
+    print('eps_abs = %4.4e\te_glob = %4.4e\te_loc = %4.4e\trejects = %d\n' % (eps_abs, e_glob, e_loc, rej_num))
     return e_loc, e_glob, n, f_evals, rej_num
 
 def adaptive_classic_rk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n, result_path, test_params):
@@ -521,11 +517,11 @@ def adaptive_classic_rk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, f
         else:
             #h_pred = const * math.pow(math.fabs(eps_abs / e_loc), 1 / (p + 1)) * h
             h_pred = 0.9 * math.pow(math.fabs(eps_abs / e_loc), 1 / (p + 1)) * h
-            print('n = %d: y_n1 is rejected: decreasen step from h = %4.4e to h_new = %4.4e\n' % (n, h, h_pred))
+            #print('n = %d: y_n1 is rejected: decreasen step from h = %4.4e to h_new = %4.4e\n' % (n, h, h_pred))
             rej_num += 1
 
     #if n < 100: plot_results(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array, result_path)
-    print('eps_abs = %4.4e\te_glob = %4.4e\te_loc = %4.4e\n' % (eps_abs, e_glob, e_loc))
+    print('eps_abs = %4.4e\te_glob = %4.4e\te_loc = %4.4e\trejects = %d\n' % (eps_abs, e_glob, e_loc, rej_num))
     return e_loc, e_glob, n, f_evals, rej_num
 
 
@@ -600,7 +596,7 @@ def adaptive_tdrk_5th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_
         fprime_3_val = fprime_n(t_n + c_3 * h, y_3)
         f_evals += 2
 
-        # reconstruct approximation y_{n+1} of the 5th order
+        # reconstruct apprimation y_{n+1} of the 5th order
         b_1 = 9/16
         b_2 = 125/432
         b_3 = 4/27
@@ -611,7 +607,7 @@ def adaptive_tdrk_5th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_
         y_n1 = y_n \
                + h * (b_1 * f_n_val + b_2 * f_2_val + b_3 * f_3_val) \
                + h**2 * (b_bar_1 * fprime_n_val + b_bar_2 * fprime_2_val + b_bar_3 * fprime_3_val)
-        # reconstruct approximation y_{n+1} of the 3rd order
+        # reconstruct apprimation y_{n+1} of the 3rd order
         y_n1_2nd = y_n \
                    + h * f_n_val \
                    + h**2 / 2 * fprime_n_val
