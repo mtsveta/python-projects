@@ -9,7 +9,7 @@ def get_project_path():
 
 def create_results_folder(directory):
     # create the full directory of the result folder
-    full_directory = get_project_path() + '/results-2nd-order-middle-step/' + directory
+    full_directory = get_project_path() + '/results/' + directory
 
     # if directory doesn't exist
     if not os.path.exists(full_directory):
@@ -18,10 +18,10 @@ def create_results_folder(directory):
     # sys.stdout = open(full_directory + '/log-results-2nd-order-middle-step.txt', "w+")
     return full_directory
 
-def plot_results(time, approx, exact, h, err, result_path):
+def plot_approximation_result(time, approx, exact, h, e_glo, e_loc, method_name, method_tag, result_path):
 
     # plot comparison of approximate and exact solution wrt time
-    fig, ax = plt.subplots(3, 1, figsize=(6, 12))
+    fig, ax = plt.subplots(3, 1, figsize=(6, 8))
     ax[0].plot(time, approx,
                color='orchid',
                linestyle='dashed',
@@ -39,10 +39,8 @@ def plot_results(time, approx, exact, h, err, result_path):
     ax[0].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
     ax[0].set_xlabel(r'$t$')
     ax[0].set_ylabel(r'$y_n, y$')
-    #plt.title('Comparison of y_n to exact y(t)')
-    ax[0].set_title(r'Comparison of $y_n$ to exact $y(t)$')
     ax[0].grid(True, color='gray', linestyle=':', linewidth=0.5)
-
+    ax[0].set_title(method_name)
     # time-steps wrt time
     ax[1].plot(time[1:], h,
                color='coral',
@@ -50,30 +48,28 @@ def plot_results(time, approx, exact, h, err, result_path):
                marker='*',
                markerfacecolor='tan',
                markersize=2,
-               label=f'$h$ by out approach')
+               label=f'$h$')
     ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
     ax[1].set_xlabel('$t$')
-    ax[1].set_ylabel('$h$')
-    ax[1].set_title('Predicted $h$')
+    ax[1].set_ylabel('predicted $h$')
     ax[1].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
     # time-steps wrt time
-    ax[2].semilogy(time[1:],  err,
+    ax[2].semilogy(time[1:], e_glo,
                    color='red',
                    linestyle=':',
                    marker='',
                    markerfacecolor='tan',
                    markersize=6,
-                   label=r'$e$')
+                   label=r'global $e$')
     ax[2].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
     ax[2].set_xlabel('$t$')
-    ax[2].set_ylabel('$e = \|y_{n+1} - y(t_{final})\|$')
-    ax[2].set_title('Error')
+    ax[2].set_ylabel('global $e$')
     ax[2].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
     plt.subplots_adjust(right=0.6)
     plt.show()
-    fig.savefig(result_path + ('/adaptive-scheme-approx-error-%d.eps' %(len(time))),
+    fig.savefig(result_path + ('/' + method_tag + 'adaptive-scheme-approx-error.eps'),
                 dpi=1000, facecolor='w', edgecolor='w', orientation='portrait', format='eps',
                 transparent=True, bbox_inches='tight', pad_inches=0.1)
 
@@ -86,7 +82,7 @@ def plot_uniform_results(e_loc_unif, e_glo_unif, n_unif, f_evals_unif, cpu_time_
                  marker='+',
                  markerfacecolor='blueviolet',
                  markersize=6,
-                 label=r'tdrk scheme (uniform)')
+                 label=r'tdrk (uniform)')
     ax[0].loglog(n_unif[1, :], e_glo_unif[1, :],
                  color='deepskyblue',
                  linestyle='dashed',
@@ -185,9 +181,9 @@ def plot_uniform_results(e_loc_unif, e_glo_unif, n_unif, f_evals_unif, cpu_time_
     ax[1].set_title('Uniform: errors wrt # of steps / func. evals.')
     ax[1].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
-    plt.subplots_adjust(right=0.6)
-    plt.show()
-    plt.savefig(result_path + '/' + tag + 'uniform-error-%d.eps' %(len(e_glo_unif)),
+    fig.subplots_adjust(right=0.6)
+    fig.show()
+    fig.savefig(result_path + '/' + tag + 'uniform-error-%d.eps' %(len(e_glo_unif)),
                 dpi=1000, facecolor='w', edgecolor='w',
                 orientation='portrait', format='eps',
                 transparent=True, bbox_inches='tight', pad_inches=0.1)

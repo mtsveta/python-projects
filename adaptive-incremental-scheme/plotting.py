@@ -18,10 +18,10 @@ def create_results_folder(directory):
     # sys.stdout = open(full_directory + '/log-results-2nd-order-middle-step.txt', "w+")
     return full_directory
 
-def plot_results(time, approx, exact, h, e_glo, e_loc, result_path):
+def plot_results(time, approx, exact, h, e_glo, e_loc, method_tag, result_path):
 
     # plot comparison of approximate and exact solution wrt time
-    fig, ax = plt.subplots(4, 1, figsize=(6, 12))
+    fig, ax = plt.subplots(3, 1, figsize=(6, 12))
     ax[0].plot(time, approx,
                color='orchid',
                linestyle='dashed',
@@ -67,22 +67,9 @@ def plot_results(time, approx, exact, h, e_glo, e_loc, result_path):
     ax[2].set_ylabel('global $e$')
     ax[2].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
-    # time-steps wrt time
-    ax[3].semilogy(time[1:], e_loc,
-                   color='red',
-                   linestyle=':',
-                   marker='',
-                   markerfacecolor='tan',
-                   markersize=6,
-                   label=r'local $e$')
-    ax[3].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
-    ax[3].set_xlabel('$t$')
-    ax[3].set_ylabel('local $e$')
-    ax[3].grid(True, color='gray', linestyle=':', linewidth=0.5)
-
     plt.subplots_adjust(right=0.6)
     plt.show()
-    fig.savefig(result_path + ('/adaptive-scheme-approx-error-%d.eps' %(len(time))),
+    fig.savefig(result_path + ('/' + method_tag + 'adaptive-scheme-approx-error-%d.eps' %(len(time))),
                 dpi=1000, facecolor='w', edgecolor='w', orientation='portrait', format='eps',
                 transparent=True, bbox_inches='tight', pad_inches=0.1)
 

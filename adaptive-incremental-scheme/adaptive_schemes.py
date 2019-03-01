@@ -1,9 +1,12 @@
-import math
-import numpy as np
+'''
 from example1 import *
-import matplotlib.pyplot as plt
-
-from plotting import *
+from example2 import *
+from example3 import *
+from example4 import *
+from example5 import *
+from example6 import *
+'''
+from plotting_4th_order_schemes import *
 
 # auxiliary functions estimating an intermediate step h_star with the first order Taylor expansion
 def h_star_estimate_1st(f_n, eps_n):
@@ -58,8 +61,8 @@ def adaptive_our_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n
         # predict h_star step
         if fprime_n_val != 0:
             # TODO: figure out what is the best factor for the convergence
-            factor = 1e5
-            if eps_n <= 1e-8:
+            factor = 1e0
+            if eps_n <= 1e-6:
                 h_star = h_star_estimate_2nd(fprime_n_val, eps_n * factor)
             else:
                 h_star = h_star_estimate_2nd(fprime_n_val, eps_n)
@@ -208,7 +211,8 @@ def adaptive_our_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_n
         y_n = y_n1
         n += 1
 
-    #if n < 100: plot_results(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array, result_path)
+    if n < 1000 and n > 10: plot_approximation_result(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array,
+                                                     'Our adaptive scheme h/h_*', 'our-adaptive-our-', result_path)
     print('  eps_abs = %4.4e\te_glob = %4.4e\te_loc = %4.4e\taccum = %4.4e\n' % (eps_abs, e_glob, e_loc, accum))
 
     return e_loc, e_glob, n, f_evals, rej_num
@@ -247,9 +251,10 @@ def adaptive_tdrk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_
         # predict h_star step
         if n == 0:
             if fprime_n_val != 0:
-                h = h_star_estimate_2nd(fprime_n_val, eps_n)
+                h_star = h_star_estimate_2nd(fprime_n_val, eps_n)
             else:
-                h = h_star_estimate_1st(f_n_val, eps_n)
+                h_star = h_star_estimate_1st(f_n_val, eps_n)
+            h = 2 * h_star
         else:
             #h = h_new
             h = h_pred
@@ -316,7 +321,8 @@ def adaptive_tdrk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_
         y_n = y_n1
         n += 1
 
-    #if n < 100: plot_results(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array, result_path)
+    if n < 1000 and n > 10: plot_approximation_result(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array,
+                                                     'Our adaptive TDRK', 'our-adaptive-tdrk-', result_path)
     print('eps_abs = %4.4e\te_glob = %4.4e\te_loc = %4.4e\n' % (eps_abs, e_glob, e_loc))
     return e_loc, e_glob, n, f_evals, rej_num
 
@@ -422,7 +428,8 @@ def adaptive_classic_tdrk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n,
             #print('y_n1 is rejected: decreasen step from h = %4.4e to h_new = %4.4e' % (h, h_pred))
             rej_num += 1
 
-    #if n < 100: plot_results(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array, result_path)
+    if n < 1000 and n > 10: plot_approximation_result(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array,
+                                                     'Classic adaptive TDRK scheme', 'classic-adaptive-tdrk-', result_path)
     print('eps_abs = %4.4e\te_glob = %4.4e\te_loc = %4.4e\trejects = %d\n' % (eps_abs, e_glob, e_loc, rej_num))
     return e_loc, e_glob, n, f_evals, rej_num
 
@@ -520,7 +527,8 @@ def adaptive_classic_rk_4th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, f
             #print('n = %d: y_n1 is rejected: decreasen step from h = %4.4e to h_new = %4.4e\n' % (n, h, h_pred))
             rej_num += 1
 
-    #if n < 100: plot_results(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array, result_path)
+    if n < 1000 and n > 10: plot_approximation_result(t_array, yn_array, y_array, h_array, e_glob_array, e_loc_array,
+                                                     'Classic adaptive RK scheme', 'classic-adaptive-rk-', result_path)
     print('eps_abs = %4.4e\te_glob = %4.4e\te_loc = %4.4e\trejects = %d\n' % (eps_abs, e_glob, e_loc, rej_num))
     return e_loc, e_glob, n, f_evals, rej_num
 
@@ -641,5 +649,5 @@ def adaptive_tdrk_5th_order(eps_rel, eps_abs, t_0, t_final, y_0, y, f_n, fprime_
         y_n = y_n1
         n += 1
 
-    #plot_results(t_array, yn_array, y_array, h_array, err_array, result_path)
+    #plot_approximation_result(t_array, yn_array, y_array, h_array, err_array, result_path)
     return lte, err, n, f_evals

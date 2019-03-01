@@ -9,6 +9,7 @@ import example3
 import example4
 import example5
 import example6
+import example7
 
 import numpy as np
 
@@ -28,6 +29,7 @@ def test_schemes(example, test_params):
         y = example6.y; f_n = example6.f_n; fprime_n = example6.fprime_n
     elif example == 7:
         y = example7.y; f_n = example7.f_n; fprime_n = example7.fprime_n
+
     result_folder = 'example' + str(example)
 
     result_path = create_results_folder(result_folder)
@@ -192,10 +194,12 @@ def test_schemes(example, test_params):
 
 if __name__== "__main__":
 
-    examples = [1, 2, 3, 4, 5, 6]
-    test_params = dict(middle_step_order = 4,
-                       detailed_log = False,
-                       polynomial_comparison = False)
+    #examples = [1, 2, 3, 4, 5, 6, 7]
+    examples = [7]
+    test_params = dict(middle_step_order=4,
+                       detailed_log=False,
+                       polynomial_comparison=False) # just tested for example 1, the import of each example +
+                                                    # implementation of derivatives is needed
 
     for example_num in range(0, len(examples)):
         print('% -------------------------------------------------------------------------------------------- %')
