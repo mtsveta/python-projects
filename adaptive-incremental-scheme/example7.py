@@ -1,16 +1,15 @@
 import math
 
-def y(t):
-    return math.exp(-100*t)
+y = lambda t: math.exp(-100*t)
+f = lambda t: -100 * y(t)
+fy = lambda t: -100
+fyy = lambda t: 0
+fyyy = lambda t: 0
 
-def f(t):
-    return -100*y(t)
+dfdt = lambda t: f(t) * fy(t)
+d2fdt2 = lambda t: (f(t))**2 * fyy(t) + f(t) * (fy(t))**2
+d3fdt3 = lambda t: (f(t))**3 * fyyy(t) + 4*(f(t))**2 * fyy(t) * fy(t) + f(t) * (fy(t))**3
 
-def fprime(t):
-    return 10000*y(t)
+f_n = lambda tn, yn: -100*yn
+dfdt_n = lambda tn, yn: 10000*yn
 
-def f_n(tn, yn):
-    return -100*yn
-
-def fprime_n(tn, yn):
-    return 10000*yn

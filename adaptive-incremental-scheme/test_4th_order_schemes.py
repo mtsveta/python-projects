@@ -16,19 +16,26 @@ import numpy as np
 def test_schemes(example, test_params):
 
     if example == 1:
-        y = example1.y; f_n = example1.f_n; fprime_n = example1.fprime_n
+        y = example1.y; f = example1.f; dfdt = example1.dfdt; d2fdt2 = example1.d2fdt2; d3fdt3 = example1.d3fdt3;
+        f_n = example1.f_n; fprime_n = example1.fprime_n
     elif example == 2:
-        y = example2.y; f_n = example2.f_n; fprime_n = example2.fprime_n
+        y = example2.y; f = example2.f; dfdt = example2.dfdt; d2fdt2 = example2.d2fdt2; d3fdt3 = example2.d3fdt3;
+        f_n = example2.f_n; fprime_n = example2.fprime_n
     elif example == 3:
-        y = example3.y; f_n = example3.f_n; fprime_n = example3.fprime_n
+        y = example3.y; f = example3.f; dfdt = example3.dfdt; d2fdt2 = example3.d2fdt2; d3fdt3 = example3.d3fdt3;
+        f_n = example3.f_n; fprime_n = example3.fprime_n
     elif example == 4:
-        y = example4.y; f_n = example4.f_n; fprime_n = example4.fprime_n
+        y = example4.y; f = example4.f; dfdt = example4.dfdt; d2fdt2 = example4.d2fdt2; d3fdt3 = example4.d3fdt3;
+        f_n = example4.f_n; fprime_n = example4.fprime_n
     elif example == 5:
-        y = example5.y; f_n = example5.f_n; fprime_n = example5.fprime_n
+        y = example5.y; f = example5.f; dfdt = example5.dfdt; d2fdt2 = example5.d2fdt2; d3fdt3 = example5.d3fdt3;
+        f_n = example5.f_n; fprime_n = example5.fprime_n
     elif example == 6:
-        y = example6.y; f_n = example6.f_n; fprime_n = example6.fprime_n
+        y = example6.y; f = example6.f; dfdt = example6.dfdt; d2fdt2 = example6.d2fdt2; d3fdt3 = example6.d3fdt3;
+        f_n = example6.f_n; fprime_n = example6.fprime_n
     elif example == 7:
-        y = example7.y; f_n = example7.f_n; fprime_n = example7.fprime_n
+        y = example7.y; f = example7.f; dfdt = example7.dfdt; d2fdt2 = example7.d2fdt2; d3fdt3 = example7.d3fdt3;
+        f_n = example7.f_n; fprime_n = example7.fprime_n
 
     result_folder = 'example' + str(example)
 
@@ -42,9 +49,10 @@ def test_schemes(example, test_params):
     #factor = 1e0
     #eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10])
     #eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11])
-    eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14]) #
-    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10])
+    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14]) #
+    eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14])
     #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8])
+    #eps_abs = np.array([1e-2, 1e-4, 1e-6])
     #eps_abs = np.array([1e-10, 1e-12])
     #eps_abs = np.array([1e-12])
     num_tol = len(eps_abs)
@@ -60,7 +68,7 @@ def test_schemes(example, test_params):
     # ---------------------------------------------------------------------------------------------------------------- #
     # 0 : our scheme with our h prediction
     # 1 : tdrk scheme  with our h prediction
-    num_of_schemes = 4
+    num_of_schemes = 5
     e_loc_adapt = np.zeros((num_of_schemes, num_tol))
     e_glob_adapt = np.zeros((num_of_schemes, num_tol))
     n_adapt   = np.zeros((num_of_schemes, num_tol))
@@ -68,6 +76,19 @@ def test_schemes(example, test_params):
     rej_num_adapt = np.zeros((num_of_schemes, num_tol))
     cpu_time = np.zeros((num_of_schemes, num_tol))
 
+
+    print('% -------------------------------------------------------------------------------------------- %')
+    print(' Taylor scheme')
+    print('% -------------------------------------------------------------------------------------------- %\n')
+
+    for i in range(0, num_tol):
+        t_start = time.time()
+        #e_loc_adapt[0, i], e_glob_adapt[0, i], n_adapt[0, i], f_evals_adapt[0, i], rej_num_adapt[0, i] \
+        #    = adaptive_taylor_4th_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f, dfdt, d2fdt2, d3fdt3,
+        #                                f_n, fprime_n, result_path, test_params)
+        cpu_time[0, i] = time.time() - t_start
+
+    '''
     print('% -------------------------------------------------------------------------------------------- %')
     print(' Our scheme (our prediction of h)')
     print('% -------------------------------------------------------------------------------------------- %\n')
@@ -77,6 +98,7 @@ def test_schemes(example, test_params):
         e_loc_adapt[0, i], e_glob_adapt[0, i], n_adapt[0, i], f_evals_adapt[0, i], rej_num_adapt[0, i] \
             = adaptive_our_4th_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f_n, fprime_n, result_path, test_params)
         cpu_time[0, i] = time.time() - t_start
+    '''
     print('% -------------------------------------------------------------------------------------------- %')
     print(' TDRK scheme (our prediction of h)')
     print('% -------------------------------------------------------------------------------------------- %\n')
@@ -88,9 +110,25 @@ def test_schemes(example, test_params):
                                       test_params)
         cpu_time[1, i] = time.time() - t_start
 
+    print('% -------------------------------------------------------------------------------------------- %')
+    print(' TDRK2 scheme (classic prediction of h)')
+    print('% -------------------------------------------------------------------------------------------- %\n')
+
+    for i in range(0, num_tol):
+        t_start = time.time()
+        e_loc_adapt[2, i], e_glob_adapt[2, i], n_adapt[2, i], f_evals_adapt[2, i], rej_num_adapt[2, i] \
+            = adaptive_classic_tdrk_2nd_order(eps_rel[i], eps_abs[i], t_0, t_fin, y_0, y, f_n, fprime_n, result_path,
+                                              test_params)
+        cpu_time[2, i] = time.time() - t_start
+
+    plot_convergence(e_loc_adapt[0:2, :], e_glob_adapt[0:2, :], n_adapt[0:2, :], f_evals_adapt[0:2, :], cpu_time[0:2, :],
+                     ['taylor4', 'tdrk4'],
+                     'adaptive-tdrk-vs-taylor-',
+                     result_path)
+
     # 2 : tdrk scheme with classic h prediction
     # 3 : rk scheme with classic h prediction
-
+    '''
     print('% -------------------------------------------------------------------------------------------- %')
     print(' TDRK scheme (classic prediction of h)')
     print('% -------------------------------------------------------------------------------------------- %\n')
@@ -191,13 +229,15 @@ def test_schemes(example, test_params):
     plot_convergence_summary(e_loc_adapt, e_glob_adapt, n_adapt, f_evals_adapt, cpu_time,
                              e_loc_unif, e_glob_unif, n_unif, f_evals_unif, cpu_time_unif,
                              'adaptive-and-uniform-', result_path)
-
+    '''
 if __name__== "__main__":
 
-    #examples = [1, 2, 3, 4, 5, 6, 7]
-    examples = [7]
+    examples = [1, 2, 3, 4, 5, 6, 7]
+    #examples = [1, 2, 3, 4]
+    #examples = [5, 6]
+    #examples = [6]
     test_params = dict(middle_step_order=4,
-                       detailed_log=False,
+                       detailed_log=True,
                        polynomial_comparison=False) # just tested for example 1, the import of each example +
                                                     # implementation of derivatives is needed
 

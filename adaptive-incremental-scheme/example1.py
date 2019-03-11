@@ -1,22 +1,11 @@
 import math
 
-def y(t):
-    return math.exp(-t)
+y = lambda t: math.exp(-t)
+f = lambda t: -y(t)
+dfdt = lambda t: y(t)
+d2fdt2 = lambda t: -y(t)
+d3fdt3 = lambda t: y(t)
 
-def f(t):
-    return -y(t)
+f_n = lambda tn, yn: -yn
+dfdt_n = lambda tn, yn: yn
 
-def fprime(t):
-    return y(t)
-
-def d2fdt2(t):
-    return -y(t)
-
-def d3fdt3(t):
-    return y(t)
-
-def f_n(tn, yn):
-    return -yn
-
-def fprime_n(tn, yn):
-    return yn
