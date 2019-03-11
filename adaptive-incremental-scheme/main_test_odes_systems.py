@@ -1,7 +1,8 @@
 #from explicit_schemes import AdaptiveTDRK4Scheme, UniformTDRK4Scheme
-from AdaptiveTDRK4Scheme import AdaptiveTDRK4Scheme
-from UniformTDRK4Scheme import UniformTDRK4Scheme
-from Test import Test
+from explicit_schemes_for_systems import AdaptiveTDRK4Scheme, UniformTDRK4Scheme
+#from AdaptiveTDRK4Scheme import AdaptiveTDRK4Scheme
+#from UniformTDRK4Scheme import UniformTDRK4Scheme
+from test import Test
 from odes import ODEs
 
 import numpy as np
@@ -9,7 +10,7 @@ import numpy as np
 def test_uniform_tdrk4_scheme():
     # define ODE
     t_0 = 0.0
-    t_fin = 5.0
+    t_fin = math.pi
     ode = ODEs(y, f, fprime, f_n, fprime_n, t_0, t_fin)
 
     # define the schemes to test
@@ -17,13 +18,13 @@ def test_uniform_tdrk4_scheme():
 
     # define time stepping array
     dt_array = (t_fin - t_0) \
-               * np.array([math.pow(2, -2), math.pow(2, -4), math.pow(2, -6), math.pow(2, -7),
+               * np.array([math.pow(2, -4), math.pow(2, -6), math.pow(2, -7),
                            math.pow(2, -8), math.pow(2, -10), math.pow(2, -12), math.pow(2, -14)])
 
-    test = Test(examples[example_num], test_params, tdrk4)
+    test = Test(examples[example_num], test_params, tdrk4, 'system')
 
     test.test_uniform(dt_array)
-    test.plot_uniform_results()
+    test.plot_results('uniform-tdrk4-scheme-')
 
 
 def test_adaptive_tdrk4_scheme():
@@ -41,9 +42,9 @@ def test_adaptive_tdrk4_scheme():
     eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14])
     eps_rel = factor * eps_abs
 
-    test = Test(examples[example_num], test_params, adapt_tdrk4)
+    test = Test(examples[example_num], test_params, adapt_tdrk4, 'system')
     test.test_adaptive(eps_abs, eps_rel)
-    test.plot_adaptive_results('adaptive-tdrk4-')
+    test.plot_results('adaptive-tdrk4-')
 
     # check if test is passed
     for i in range(0, len(eps_abs)):
@@ -53,7 +54,7 @@ def test_adaptive_tdrk4_scheme():
 
 if __name__== "__main__":
 
-    examples = [1, 2]
+    examples = [1]
     test_params = dict(test_log=True,
                        scheme_log=True)  # just tested for example 1, the import of each example +
     # implementation of derivatives is needed
@@ -68,5 +69,6 @@ if __name__== "__main__":
         #elif examples[example_num] == 2:
         #    from example2 import *
 
-        #test_adaptive_tdrk4_scheme();
-        test_uniform_tdrk4_scheme();
+        test_adaptive_tdrk4_scheme()
+        test_uniform_tdrk4_scheme()
+

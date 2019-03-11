@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 class Test():
 
     def __init__(self, example, params, scheme, example_name):
-        self.example, self.params, self.scheme = example, params, scheme
+        self.example, self.scheme, self.scheme.params = example, scheme, params
         self.result_path = self.create_results_folder(example_name + str(self.example))
         self.scheme.set_log(params['scheme_log'])
 
@@ -51,9 +51,10 @@ class Test():
             t_start = time.time()
             self.e_glob[i], self.n[i], self.f_evals[i] = self.scheme.solve()
             self.cpu_time[i] = time.time() - t_start
-            if self.params['test_log']:
+            if self.scheme.params['test_log']:
                 print('eps_abs = %4.4e\te_glob = %4.4e\t\tn = %6d\tf_evals = %6d\n' % (
                       eps_abs[i], self.e_glob[i], self.n[i], self.f_evals[i]))
+            self.plot_approximation_result()
             self.scheme.refresh()
 
     def test_uniform(self, dt_array):
@@ -66,10 +67,11 @@ class Test():
             t_start = time.time()
             self.e_glob[i], self.n[i], self.f_evals[i] = self.scheme.solve()
             self.cpu_time[i] = time.time() - t_start
-            if self.params['test_log']:
+            if self.scheme.params['test_log']:
                 print('h = %4.4e\te_glob = %4.4e\t\tn = %6d\tf_evals = %6d\n'
                       % (dt_array[i], self.e_glob[i], self.n[i], self.f_evals[i]))
-            #self.plot_approximation_result()
+            self.scheme.refresh()
+            #self.scheme.plot_approximation_result()
 
     def plot_results(self, tag):
         fig, ax = plt.subplots(2, 1, figsize=(6, 8))
@@ -82,20 +84,20 @@ class Test():
                      markersize=6,
                      label=r'our scheme (our h pred.)')
         # plot different convergences
-        ax[0].loglog(self.f_evals, np.power(self.f_evals, -3),
+        ax[0].loglog(self.f_evals, np.power(self.f_evals, -self.scheme.p),
                      color='gray',
                      linestyle='dashed',
                      marker='',
                      markerfacecolor='gray',
                      markersize=6,
-                     label=r'$3$th order')
-        ax[0].loglog(self.f_evals, np.power(self.f_evals, -4),
+                     label=('order %d' %self.scheme.p))
+        ax[0].loglog(self.f_evals, np.power(self.f_evals, -self.scheme.p + 1),
                      color='tan',
                      linestyle='dashed',
                      marker='',
                      markerfacecolor='tan',
                      markersize=6,
-                     label=r'$4$th order')
+                     label=('order %d' % (self.scheme.p - 1)))
 
         ax[0].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
         ax[0].set_xlabel(r'func. evals.')
@@ -125,11 +127,8 @@ class Test():
 
     def plot_approximation_result(self):
         # plot comparison of approximate and exact solution wrt time
-        fig, ax = plt.subplots(2, 1, figsize=(6, 8))
+        fig, ax = plt.subplots(3, 1, figsize=(6, 8))
 
-        y = np.vectorize(self.scheme.y, otypes=[np.ndarray])
-        #y = np.vectorize(self.scheme.y)
-        exact = y(self.scheme.t_n)
         for i in range(self.scheme.neq):
             if self.scheme.neq == 1:
                 y_n = self.scheme.y_n
@@ -142,37 +141,41 @@ class Test():
                        markerfacecolor=self.colors[2*i],
                        markersize=6,
                        label=r'$y_n^{' + str(i) + '}$')
-            '''
-            ax[0].plot(self.scheme.t_n, exact[:][i],
-                       color=colors[2*i + 1],
-                       linestyle='',
-                       marker='o',
-                       markerfacecolor=colors[2*i + 1],
-                       markersize=2,
-                       label=r'$y^{' + str(i) + '}$')
-            '''
+
         ax[0].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
         ax[0].set_xlabel(r'$t$')
         ax[0].set_ylabel(r'$y_n, y$')
         ax[0].grid(True, color='gray', linestyle=':', linewidth=0.5)
-
+        ax[0].set_title(self.scheme.tag)
         # time-steps wrt time
         ax[1].semilogy(self.scheme.t_n, self.scheme.e_n,
                    color='coral',
                    linestyle='dashed',
                    marker='*',
                    markerfacecolor='coral',
-                   markersize=2,
-                   label=f'$h$')
+                   markersize=4,
+                   label=f'$e$')
         ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
         ax[1].set_xlabel('$t$')
         ax[1].set_ylabel('predicted $h$')
         ax[1].grid(True, color='gray', linestyle=':', linewidth=0.5)
 
+        # time-steps wrt time
+        ax[2].semilogy(self.scheme.t_n, self.scheme.dt_n,
+                       color='#7aa0c4',
+                       linestyle=':',
+                       marker='^',
+                       markerfacecolor='#7aa0c4',
+                       markersize=4,
+                       label=f'$h$')
+        ax[2].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
+        ax[2].set_xlabel('$t$')
+        ax[2].set_ylabel('predicted $h$')
+        ax[2].grid(True, color='gray', linestyle=':', linewidth=0.5)
+
         plt.subplots_adjust(right=0.6)
         plt.show()
-        tag = ''
-        fig.savefig(self.result_path + '/' + tag + 'solutions-convergence-%d.eps' % len(self.scheme.t_n),
+        fig.savefig(self.result_path + '/' + self.scheme.tag + '-solutions-convergence-%d.eps' % len(self.scheme.t_n),
                     dpi=1000, facecolor='w', edgecolor='w',
                     orientation='portrait', format='eps',
                     transparent=True, bbox_inches='tight', pad_inches=0.1)
@@ -182,37 +185,36 @@ class Test():
         fig, ax = plt.subplots(2, 1, figsize=(6, 8))
         # plot global errors wrt number of steps
         ax[0].loglog(self.f_evals, self.e_glob,
-                     color='green',
+                     color=self.colors[1],
                      linestyle='dashed',
                      marker='o',
-                     markerfacecolor='green',
+                     markerfacecolor=self.colors[1],
                      markersize=6,
-                     label=r'our h pred. + tdrk')
+                     label=self.scheme.tag)
         for i in range(len(tests)):
             ax[0].loglog(tests[i].f_evals, self.e_glob,
-                         color=self.colors[i],
+                         color=self.colors[2*i],
                          linestyle='dashed',
                          marker='o',
-                         markerfacecolor=self.colors[i],
+                         markerfacecolor=self.colors[2*i],
                          markersize=6,
-                         label=labels[i])
+                         label=labels[i+1])
 
         # plot different convergences
-        p = 3
-        ax[0].loglog(self.f_evals, np.power(self.f_evals, -p),
+        ax[0].loglog(self.f_evals, np.power(self.f_evals, -self.scheme.p),
                      color='gray',
                      linestyle='dashed',
                      marker='',
                      markerfacecolor='gray',
                      markersize=6,
-                     label=r'$3$th order')
-        ax[0].loglog(self.f_evals, np.power(self.f_evals, -(p+1)),
+                     label=('order %d' % self.scheme.p))
+        ax[0].loglog(self.f_evals, np.power(self.f_evals, -self.scheme.p + 1),
                      color='tan',
                      linestyle='dashed',
                      marker='',
                      markerfacecolor='tan',
                      markersize=6,
-                     label=r'$4$th order')
+                     label=('order %d' % (self.scheme.p - 1)))
 
         ax[0].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
         ax[0].set_xlabel(r'func. evals.')
@@ -222,21 +224,21 @@ class Test():
 
         # plot global error wrt number of functions evaluation
         ax[1].loglog(self.cpu_time, self.e_glob,
-                     color='green',
+                     color=self.colors[1],
                      linestyle='dashed',
                      marker='o',
-                     markerfacecolor='green',
+                     markerfacecolor=self.colors[1],
                      markersize=6,
-                     label=r'our scheme (our h pred.)')
+                     label=self.scheme.tag)
 
         for i in range(len(tests)):
             ax[1].loglog(tests[i].cpu_time, self.e_glob,
-                         color=self.colors[i],
+                         color=self.colors[2*i],
                          linestyle='dashed',
                          marker='o',
-                         markerfacecolor=self.colors[i],
+                         markerfacecolor=self.colors[2*i],
                          markersize=6,
-                         label=labels[i])
+                         label=labels[i+1])
 
         ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
         ax[1].set_xlabel(r'cpu time')
