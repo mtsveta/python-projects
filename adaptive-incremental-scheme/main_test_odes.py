@@ -18,7 +18,7 @@ def test_uniform_tdrk4_scheme():
                * np.array([math.pow(2, -2), math.pow(2, -4), math.pow(2, -6), math.pow(2, -7),
                            math.pow(2, -8), math.pow(2, -10), math.pow(2, -12), math.pow(2, -14)])
 
-    test = Test(examples[example_num], test_params, tdrk4)
+    test = Test(examples[example_num], test_params, tdrk4, 'system-example-')
 
     test.test_uniform(dt_array)
     test.plot_uniform_results()
@@ -37,6 +37,7 @@ def test_adaptive_tdrk4_scheme():
     # define tolerances
     factor = 1e0
     eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10])
+    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14])
     eps_rel = factor * eps_abs
 
     print('% -------------------------------------------------------------------------------------------- %')
@@ -150,8 +151,8 @@ def test_comparison_adaptive_taylor4_tdrk4():
 
     # define tolerances
     factor = 1e0
-    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12])
-    eps_abs = np.array([1e-8])
+    eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12])
+    #eps_abs = np.array([1e-8])
     eps_rel = factor * eps_abs
 
     print('% -------------------------------------------------------------------------------------------- %')
