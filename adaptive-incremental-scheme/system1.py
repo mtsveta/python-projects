@@ -9,7 +9,6 @@ y = lambda t:        np.array([np.sin(t),
 # rhs
 f0 = lambda t, y: y[1]
 f1 = lambda t, y: - y[0]
-
 f = lambda t, y:        np.array([y[1],
                                   -y[0]])
 F = [f0, f1]
@@ -17,7 +16,6 @@ F = [f0, f1]
 # jacobian of rhs
 Jf0_y = lambda t, y: np.array([0, 1])
 Jf1_y = lambda t, y: np.array([-1, 0])
-
 J_y = lambda t, y:      np.array([[0, 1],
                                   [-1, 0]])
 JF_y = [Jf0_y, Jf1_y]

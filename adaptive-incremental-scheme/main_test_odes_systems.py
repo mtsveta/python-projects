@@ -1,7 +1,7 @@
 from explicit_schemes import \
     AdaptiveTDRK2Scheme, AdaptiveClassicTDRK2Scheme, AdaptiveTDRK4Scheme, AdaptiveTaylor4Scheme, UniformTDRK4Scheme
 from explicit_schemes import AdaptiveTDRK4SingleRateScheme, AdaptiveTDRK2SingleRateScheme, \
-    AdaptiveTDRK4MiltiRateScheme, AdaptiveTDRK2MultiRateScheme
+    AdaptiveTDRK2MultiRateScheme, AdaptiveTDRK4MultiRateScheme
 
 from test import Test
 from odes import ODEs
@@ -44,8 +44,10 @@ def test_adaptive_tdrk4_scheme():
 
     # define tolerances
     factor = 1e0
-    eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10])
-    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14])
+    if examples[example_num] == 2:
+        eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6])
+    else:
+        eps_abs = np.array([1e-4, 1e-5, 1e-6, 1e-7, 1e-8])
     eps_rel = factor * eps_abs
 
     print('% -------------------------------------------------------------------------------------------- %')
@@ -76,18 +78,19 @@ def test_comparison_srtdrk2_mrtdrk2():
 
     # define tolerances
     factor = 1e0
-    eps_abs = np.array([1e-2, 1e-4, 1e-6])
+    if examples[example_num] == 2:  eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6])
+    else:                           eps_abs = np.array([1e-4, 1e-5, 1e-6, 1e-7, 1e-8])
     eps_rel = factor * eps_abs
 
     print('% -------------------------------------------------------------------------------------------- %')
-    print(' multirate adaptive tdrk2')
+    print('  adaptive tdrk2 (2 * neq function call per step)')
     print('% -------------------------------------------------------------------------------------------- %\n')
 
     test_sr = Test(examples[example_num], test_params, tdrk2_sr, 'system-')
     test_sr.test_adaptive(eps_abs, eps_rel)
 
     print('% -------------------------------------------------------------------------------------------- %')
-    print(' adaptive tdrk2 (2 * neq function call per step)')
+    print('  multirate adaptive tdrk2')
     print('% -------------------------------------------------------------------------------------------- %\n')
 
     test_mr = Test(examples[example_num], test_params, tdrk2_mr, 'system-')
@@ -95,19 +98,55 @@ def test_comparison_srtdrk2_mrtdrk2():
 
     test_sr.compare_results([test_mr], ['sr-tdrk2', 'mr-tdrk2'], 'sr-vs-mr-tdrk2-')
 
+def test_comparison_srtdrk4_mrtdrk4():
+
+    # define ODE
+    t_0 = 0.0
+    t_fin = 1.0
+    ode = ODEs(y, f, dfdt, J_y, J_t, f_n, dfdt_n, t_0, t_fin, F, JF_y, dFdt)
+
+    # define the schemes to test
+    tdrk4_sr = AdaptiveTDRK4SingleRateScheme(ode, 'sr-tdrk4')
+    tdrk4_mr = AdaptiveTDRK4MultiRateScheme(ode, 'mr-tdrk4')
+
+    # define tolerances
+    factor = 1e0
+    if examples[example_num] == 2:  eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6])
+    else:                           eps_abs = np.array([1e-4, 1e-5, 1e-6, 1e-7, 1e-8])
+    #eps_abs = np.array([1e-3])
+    eps_rel = factor * eps_abs
+
+    print('% -------------------------------------------------------------------------------------------- %')
+    print('  adaptive tdrk4 (4 * neq function call per step)')
+    print('% -------------------------------------------------------------------------------------------- %\n')
+
+    test_sr = Test(examples[example_num], test_params, tdrk4_sr, 'system-')
+    test_sr.test_adaptive(eps_abs, eps_rel)
+
+    print('% -------------------------------------------------------------------------------------------- %')
+    print('  multirate adaptive tdrk4')
+    print('% -------------------------------------------------------------------------------------------- %\n')
+
+    test_mr = Test(examples[example_num], test_params, tdrk4_mr, 'system-')
+    test_mr.test_adaptive(eps_abs, eps_rel)
+
+    test_sr.compare_results([test_mr], ['sr-tdrk4', 'mr-tdrk4'], 'sr-vs-mr-tdrk4-')
+
 def test_adaptive_multirate_tdrk2_scheme():
 
     # define ODE
     t_0 = 0.0
-    t_fin = 5.0
+    t_fin = 10.0
     ode = ODEs(y, f, dfdt, J_y, J_t, f_n, dfdt_n, t_0, t_fin, F, JF_y, dFdt)
 
     # define the schemes to test
     adapt_tdrk2 = AdaptiveTDRK2MultiRateScheme(ode, 'mr-tdrk2')
     # define tolerances
     factor = 1e0
-    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8])
-    eps_abs = np.array([1e-2, 1e-4, 1e-6])
+    if examples[example_num] == 2:
+        eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6])
+    else:
+        eps_abs = np.array([1e-4, 1e-5, 1e-6, 1e-7, 1e-8])
     eps_rel = factor * eps_abs
 
     print('% -------------------------------------------------------------------------------------------- %')
@@ -129,16 +168,17 @@ def test_adaptive_tdrk2_scheme():
 
     # define ODE
     t_0 = 0.0
-    t_fin = 5.0
+    t_fin = 1.0
     ode = ODEs(y, f, dfdt, J_y, J_t, f_n, dfdt_n, t_0, t_fin, F, JF_y, dFdt)
 
     # define the schemes to test
     adapt_tdrk2 = AdaptiveTDRK2SingleRateScheme(ode, 'sr-tdrk2')
     # define tolerances
-    factor = 1e-2
-    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-8])
-    #eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-7])
-    eps_abs = np.array([1e-2, 1e-4, 1e-6])
+    factor = 1e0
+    if examples[example_num] == 2:
+        eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6])
+    else:
+        eps_abs = np.array([1e-4, 1e-5, 1e-6, 1e-7, 1e-8])
     eps_rel = factor * eps_abs
 
     print('% -------------------------------------------------------------------------------------------- %')
@@ -155,18 +195,23 @@ def test_adaptive_tdrk2_scheme():
         success = (test.e_glob[i] < eps_abs[i] + eps_rel[i])
         assert success, "eps = %4.4e\t e_glob = %4.4e" % (eps_abs[i] + eps_rel[i], test.e_glob[i])
     '''
+
 def test_adaptive_tdrk4_scheme():
 
     # define ODE
     t_0 = 0.0
-    t_fin = 5.0
+    t_fin = 1.0
     ode = ODEs(y, f, dfdt, J_y, J_t, f_n, dfdt_n, t_0, t_fin, F, JF_y, dFdt)
 
     # define the schemes to test
     adapt_tdrk2 = AdaptiveTDRK4SingleRateScheme(ode, 'tdrk4')
     # define tolerances
     factor = 1e-2
-    eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-7])
+    if examples[example_num] == 2:
+        eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-5, 1e-6])
+    else:
+        eps_abs = np.array([1e-4, 1e-5, 1e-6, 1e-7, 1e-8])
+        #eps_abs = np.array([1e-4, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14, 1e-16])
     #eps_abs = np.array([1e-2, 1e-4, 1e-6])
     eps_rel = factor * eps_abs
 
@@ -184,28 +229,30 @@ def test_adaptive_tdrk4_scheme():
         success = (test.e_glob[i] < eps_abs[i] + eps_rel[i])
         assert success, "eps = %4.4e\t e_glob = %4.4e" % (eps_abs[i] + eps_rel[i], test.e_glob[i])
     '''
+
 def test_adaptive_multirate_tdrk4_scheme():
 
     # define ODE
     t_0 = 0.0
-    t_fin = 5.0
-    ode = ODEs(y, f, dfdt, J_y, J_t, f_n, dfdt_n, t_0, t_fin)
+    t_fin = 1.0
+    ode = ODEs(y, f, dfdt, J_y, J_t, f_n, dfdt_n, t_0, t_fin, F, JF_y, dFdt)
 
     # define the schemes to test
-    adapt_tdrk2 = AdaptiveTDRK4MiltiRateScheme(ode, 'mr-tdrk2')
+    adapt_tdrk2 = AdaptiveTDRK4MultiRateScheme(ode, 'mr-tdrk4')
     # define tolerances
-    factor = 1e-2
-    eps_abs = np.array([1e-2, 1e-4, 1e-6, 1e-7])
+    factor = 1e0
+    eps_abs = np.array([1e-2, 1e-3, 1e-4])
+    #eps_abs = np.array([1e-2, 1e-3, 1e-4, 1e-6, 1e-7])
     #eps_abs = np.array([1e-2, 1e-4, 1e-6])
     eps_rel = factor * eps_abs
 
     print('% -------------------------------------------------------------------------------------------- %')
-    print(' adaptive tdrk2')
+    print(' adaptive multi-rate tdrk4')
     print('% -------------------------------------------------------------------------------------------- %\n')
 
     test = Test(examples[example_num], test_params, adapt_tdrk2, 'system-')
     test.test_adaptive(eps_abs, eps_rel)
-    test.plot_results('adaptive-tdrk2-')
+    test.plot_results('adaptive-tdrk4-')
 
     '''
     # check if test is passed
@@ -308,11 +355,15 @@ if __name__== "__main__":
 
     # 1 is working
     # 4 is working
-    examples = [2]
+    #examples = [1, 2, 3, 4, 5]
+    #examples = [1, 2, 3 , 4, 5]
+    #examples = [1, 2, 3, 4, 5]
+    #examples = [3]
+    examples = [7]
     # , 4, 5
     #examples = [3, 4, 5]
     test_params = dict(test_log=True,
-                       scheme_log=False)
+                       scheme_log=True)
 
     for example_num in range(0, len(examples)):
         print('% -------------------------------------------------------------------------------------------- %')
@@ -329,13 +380,21 @@ if __name__== "__main__":
             from system4 import *
         elif examples[example_num] == 5:
             from system5 import *
+        elif examples[example_num] == 6:
+            from system6 import *
+        elif examples[example_num] == 7:
+            from system7 import *
 
         #test_adaptive_tdrk4_scheme()
-        #test_adaptive_tdrk2_scheme()
+        test_adaptive_tdrk2_scheme()
         #test_adaptive_multirate_tdrk2_scheme()
+        #test_comparison_srtdrk2_mrtdrk2()
 
-        test_comparison_srtdrk2_mrtdrk2()
 
+        #test_adaptive_tdrk4_scheme()
+        #test_adaptive_multirate_tdrk4_scheme()
+
+        #test_comparison_srtdrk4_mrtdrk4()
         print("")
         #test_uniform_tdrk4_scheme()
 
